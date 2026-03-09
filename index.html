@@ -332,7 +332,7 @@
         <div class="page-title">Projets</div>
         <div class="page-subtitle">Tous les dossiers clients avec détail par corps de métier</div>
       </div>
-      <button class="btn btn-primary" onclick="openNewProjectModal()">+ Nouveau projet</button>
+
     </div>
 
     <div class="card">
@@ -393,7 +393,7 @@
       </div>
     </div>
     <div id="fin-detail" style="display:none">
-      <div class="card" style="margin-bottom:16px"><div style="padding:20px 24px;display:flex;flex-wrap:nowrap;gap:16px;overflow-x:auto" id="fin-kpis"></div></div>
+      <div class="card" style="margin-bottom:16px"><div style="padding:20px 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="fin-kpis"></div></div>
       <div class="card"><div class="tbl-scroll">
         <table style="font-size:11.5px;min-width:1600px;border-collapse:collapse">
           <thead><tr>
@@ -487,30 +487,6 @@
   </div>
 </div>
 
-<!-- MODAL NOUVEAU PROJET -->
-<div class="modal-overlay" id="modal-new-project">
-  <div class="modal">
-    <div class="modal-header">
-      <div><div class="modal-title">Nouveau projet</div></div>
-      <button class="modal-close" onclick="closeModal('modal-new-project')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group full"><label>Client / Maître d'ouvrage</label><input id="new-client" placeholder="ex: DUPONT Jean-Pierre"></div>
-        <div class="form-group full"><label>Description du projet</label><input id="new-projet" placeholder="ex: Rénovation complète d'une maison"></div>
-        <div class="form-group full"><label>Adresse du chantier</label><input id="new-adresse" placeholder="ex: 12 rue des Artisans 47000 AGEN"></div>
-        <div class="form-group"><label>Adresse client</label><input id="new-adresse-client" placeholder="si différente"></div>
-        <div class="form-group"><label>Mail client</label><input id="new-mail" type="email" placeholder="client@email.fr"></div>
-        <div class="form-group"><label>Téléphone</label><input id="new-tel" placeholder="06 XX XX XX XX"></div>
-        <div class="form-group"><label>Responsable MOE</label><select id="new-moe"><option>MG</option><option>SD</option><option>BD</option></select></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-new-project')">Annuler</button>
-      <button class="btn btn-primary" onclick="addNewProject()">Créer le projet</button>
-    </div>
-  </div>
-</div>
 
 <!-- MODAL CONTACT -->
 <div class="modal-overlay" id="modal-new-contact">
@@ -826,33 +802,8 @@ function saveProject() {
   showToast('✓ Modifications enregistrées');
 }
 
-function openNewProjectModal() {
-  document.getElementById('modal-new-project').classList.add('open');
-}
 
-function addNewProject() {
-  const client = document.getElementById('new-client').value.trim();
-  if (!client) { alert('Le nom du client est requis'); return; }
-  const newP = {
-    id: 'NEW_' + Date.now(),
-    client,
-    projet: document.getElementById('new-projet').value,
-    adresse: document.getElementById('new-adresse').value,
-    artisans: [],
-    total_devis_ttc: 0,
-    total_reste: 0,
-    total_mdt: 0,
-    nb_artisans: 0
-  };
-  allProjects.unshift(newP);
-  closeModal('modal-new-project');
-  renderProjects();
-  initDashboard();
-  showToast('✓ Projet créé : ' + client);
-  ['new-client','new-projet','new-adresse','new-adresse-client','new-mail','new-tel'].forEach(id => document.getElementById(id).value = '');
-}
 
-let finCurrentProjet = null;
 
 function finInitKpis() {
   const total = PROJECTS_FULL.reduce((s,p)=>s+(p.total_devis_ttc||0),0);

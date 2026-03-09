@@ -241,6 +241,11 @@
   .filter-tab:hover:not(.active) { border-color:var(--muted); color:var(--text); }
 
   @media(max-width:1100px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } }
+
+  /* Headers figés */
+  .tbl-wrap { max-height:65vh;overflow-y:auto; }
+  .tbl-wrap thead th { position:sticky !important;top:0 !important;z-index:5;background:var(--surface2) !important;box-shadow:0 1px 0 var(--border); }
+  #fin-detail-body + * th, #fin-detail-body ~ tfoot { position:sticky; }
 </style>
 </head>
 <body>
@@ -289,7 +294,21 @@
     </div>
 
     <div class="kpi-grid">
-      <span id="kpi-devis" style="display:none"></span><span id="kpi-mdt" style="display:none"></span><span id="kpi-reste" style="display:none"></span>
+      <div class="kpi purple">
+        <div class="kpi-label">Volume total devis TTC</div>
+        <div class="kpi-value" id="kpi-devis">—</div>
+        <div class="kpi-sub">tous chantiers confondus</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">MDT perçus</div>
+        <div class="kpi-value" id="kpi-mdt">—</div>
+        <div class="kpi-sub">honoraires encaissés</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-label">Reste à facturer</div>
+        <div class="kpi-value" id="kpi-reste">—</div>
+        <div class="kpi-sub">soldes en attente</div>
+      </div>
       <div class="kpi gold">
         <div class="kpi-label">Chantiers actifs</div>
         <div class="kpi-value" id="kpi-nb">33</div>
@@ -345,7 +364,7 @@
           <input class="search-box" type="text" placeholder="🔍 Rechercher..." oninput="filterProjects(this.value)">
         </div>
       </div>
-      <table>
+      <div class="tbl-wrap"><table>
         <thead><tr>
           <th>Client / Maître d'ouvrage</th>
           <th>Projet</th>
@@ -356,7 +375,7 @@
           <th>Actions</th>
         </tr></thead>
         <tbody id="projects-table"></tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 
@@ -390,9 +409,9 @@
           <div class="card-title">Projets (<span id="fin-nb">0</span>)</div>
           <input class="search-box" type="text" placeholder="🔍 Rechercher..." oninput="filterFinancierSearch(this.value)">
         </div>
-        <table><thead style="position:sticky;top:0;z-index:10"><tr>
+        <div class="tbl-wrap"><table><thead><tr>
           <th>Client</th><th>Devis HT</th><th>Devis TTC</th><th>Acomptes</th><th>Fact. inter.</th><th>Factures fin.</th><th>MDT reçus</th><th>Reste</th><th>%</th>
-        </tr></thead><tbody id="fin-table"></tbody></table>
+        </tr></thead><tbody id="fin-table"></tbody></table></div></div>
       </div>
     </div>
     <div id="fin-detail" style="display:none">
@@ -436,7 +455,7 @@
         <input class="search-box" type="text" placeholder="🔍 Rechercher..." oninput="filterAdmSearch(this.value)">
       </div>
       <div style="overflow-x:auto">
-        <table id="adm-main-table">
+        <div class="tbl-wrap"><table id="adm-main-table">
           <thead><tr>
             <th>Dossier</th>
             <th>MOE</th>
@@ -451,7 +470,7 @@
             <th>Actions</th>
           </tr></thead>
           <tbody id="adm-table"></tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   </div>

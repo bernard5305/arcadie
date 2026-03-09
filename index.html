@@ -565,64 +565,94 @@
 <script>
 
 // ============================================================
-// CARTE GOOGLE MAPS (iframe embed - sans clé API)
+// CARTE — points chantiers (coordonnées embarquées)
 // ============================================================
+const CHANTIERS_COORDS = {"AGUR BOULAZAC/SCI URA": [43.4833, -1.5167], "SAS ALEGRIA": [44.3833, 0.6667], "ANDAPEI ateliers protégées - agroalimentaire (Michel)": [44.1833, 0.5833], "ARMAND": [44.2, 0.6167], "Association AUTAS": [44.3167, 0.65], "BONNEFOUX Jean-Paul": [44.4, 0.7167], "BOURHIS Jean-Yves": [44.2, 0.62], "BOUTELOUP- KELLER": [44.2667, 0.7333], "BOVERIE Catherine": [44.35, 0.9167], "M. et Mme BRUGALIERES/LEMINOUS": [44.85, 0.4833], "SCI CDS (CONSTANTY William)": [44.205, 0.621], "DELORD sinistre": [43.5167, -1.5333], "DUBRULLE": [44.3667, 0.8833], "DUCHENE": [44.201, 0.619], "EFS AGEN": [43.4917, -1.475], "ETIKOA BOULANGERIE": [44.202, 0.618], "GAJZLER Sophie _EURL AVELANA": [44.1833, 0.55], "GG GYM": [44.851, 0.484], "GIROUD BERGERAC": [44.203, 0.6195], "GREGOIRE maison 1 et 2": [44.849, 0.482], "J2 PATRIMOINE": [44.8505, 0.485], "SCI JCGB - JAVALOYES gare": [44.8515, 0.483], " JAVALOYES 2 pompe funèbre": [44.8495, 0.4815], "JAVALOYES 3": [44.401, 0.722], "LAFFERRIERE BERGERAC OLYMPIADES": [44.204, 0.6205], "MONGELLI VSL": [44.2015, 0.6185], "SCI 411 ERMITAGE (SARRAZIN MAISON)": [44.4005, 0.7185], "SCI IMMO VIVENT": [44.4015, 0.721], "SCI PAGRU": [44.185, 0.551], "SMTI": [44.6667, 0.4], "TEIBI Katia": [43.484, -1.515], "SAS BRICOPROM": [44.2025, 0.6175], "WDM2 EYMET": [44.666, 0.399]};
+
 function initMap() {
-  const projects = PROJECTS_FULL.filter(p => p.adresse && p.adresse.trim());
   const mapDiv = document.getElementById('dashboard-map');
   const countEl = document.getElementById('map-count');
 
-  // Construire la query avec toutes les adresses pour "My Maps" style
-  // On utilise l'embed Google Maps avec recherche sur la région
-  // Centre sur le Sud-Ouest France
-  const centerQuery = encodeURIComponent('Lot-et-Garonne, France');
-  
-  // Créer l'iframe Google Maps centrée sur le Sud-Ouest
-  const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'width:100%;height:100%;border:0;border-radius:10px';
-  iframe.loading = 'lazy';
-  iframe.allowFullscreen = true;
-  iframe.referrerPolicy = 'no-referrer-when-downgrade';
-  iframe.src = 'https://maps.google.com/maps?q=Lot-et-Garonne,+France&z=9&output=embed&hl=fr';
-  
-  mapDiv.innerHTML = '';
-  mapDiv.appendChild(iframe);
-
-  // Afficher les projets sous forme de liste cliquable à côté
-  countEl.textContent = projects.length + ' chantiers';
-
-  // Créer un panneau de liste des projets avec liens Google Maps
-  const panel = document.createElement('div');
-  panel.style.cssText = 'margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;max-height:200px;overflow-y:auto;padding:4px';
-  
-  projects.forEach(p => {
-    if (!p.adresse) return;
-    const gmUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(p.adresse + ', France');
-    const card = document.createElement('a');
-    card.href = gmUrl;
-    card.target = '_blank';
-    card.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);text-decoration:none;color:var(--text);font-size:12px;transition:border-color 0.2s';
-    card.onmouseover = () => card.style.borderColor = 'var(--accent)';
-    card.onmouseout = () => card.style.borderColor = 'var(--border)';
-    card.innerHTML = `
-      <span style="font-size:16px;flex-shrink:0">📍</span>
-      <div>
-        <div style="font-weight:600;color:var(--accent);font-size:12px">${p.client}</div>
-        <div style="color:var(--muted);font-size:11px;margin-top:2px">${p.adresse}</div>
-      </div>`;
-    panel.appendChild(card);
-  });
-
-  // Insérer le panneau après la carte
-  const cardMap = document.getElementById('card-map');
-  // Supprimer ancien panneau si existe
-  const oldPanel = document.getElementById('map-panel');
-  if (oldPanel) oldPanel.remove();
-  panel.id = 'map-panel';
-  panel.style.marginTop = '12px';
-  cardMap.appendChild(panel);
+  // Charger Leaflet depuis jsDelivr (CDN alternatif)
+  if (!document.getElementById('leaflet-css')) {
+    const lnk = document.createElement('link');
+    lnk.id = 'leaflet-css';
+    lnk.rel = 'stylesheet';
+    lnk.href = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css';
+    document.head.appendChild(lnk);
+  }
+  if (typeof L === 'undefined') {
+    const scr = document.createElement('script');
+    scr.src = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js';
+    scr.onload = () => buildMap();
+    scr.onerror = () => showMapFallback();
+    document.head.appendChild(scr);
+    return;
+  }
+  buildMap();
 }
 
+function showMapFallback() {
+  // Fallback : iframe Google Maps centrée sur Sud-Ouest
+  const mapDiv = document.getElementById('dashboard-map');
+  mapDiv.innerHTML = '<iframe src="https://maps.google.com/maps?q=Lot-et-Garonne,+France&z=9&output=embed&hl=fr" style="width:100%;height:100%;border:0;border-radius:10px" loading="lazy"></iframe>';
+  document.getElementById('map-count').textContent = '33 chantiers';
+  buildProjectList();
+}
+
+function buildMap() {
+  if (window._dashMap) { window._dashMap.remove(); window._dashMap = null; }
+  const mapDiv = document.getElementById('dashboard-map');
+  mapDiv.innerHTML = '';
+
+  window._dashMap = L.map(mapDiv, { center: [44.35, 0.55], zoom: 8 });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+  }).addTo(window._dashMap);
+
+  const goldIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:12px;height:12px;background:#c8a96e;border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px rgba(200,169,110,0.9)"></div>',
+    iconSize: [12, 12], iconAnchor: [6, 6], popupAnchor: [0, -10]
+  });
+
+  let count = 0;
+  PROJECTS_FULL.forEach(p => {
+    const coord = CHANTIERS_COORDS[p.client];
+    if (!coord) return;
+    const marker = L.marker(coord, { icon: goldIcon }).addTo(window._dashMap);
+    const devis = p.total_devis_ttc ? fmt(p.total_devis_ttc) + ' €' : '—';
+    const reste = p.total_reste ? fmt(p.total_reste) + ' €' : '—';
+    marker.bindPopup('<div style="font-family:DM Sans,sans-serif;min-width:180px"><div style="font-weight:700;margin-bottom:4px">' + p.client + '</div>' +
+      (p.projet ? '<div style="font-size:12px;color:#666;margin-bottom:4px">' + p.projet + '</div>' : '') +
+      '<div style="font-size:11px;color:#888;margin-bottom:6px">📍 ' + (p.adresse||'') + '</div>' +
+      '<div style="font-size:12px">Devis: <strong>' + devis + '</strong> · Reste: <strong>' + reste + '</strong></div></div>',
+      { maxWidth: 260 });
+    count++;
+  });
+  document.getElementById('map-count').textContent = count + ' chantiers';
+}
+
+function buildProjectList() {
+  const projects = PROJECTS_FULL.filter(p => p.adresse && p.adresse.trim());
+  const cardMap = document.getElementById('card-map');
+  const oldPanel = document.getElementById('map-panel');
+  if (oldPanel) oldPanel.remove();
+  const panel = document.createElement('div');
+  panel.id = 'map-panel';
+  panel.style.cssText = 'margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;max-height:200px;overflow-y:auto;padding:4px';
+  projects.forEach(p => {
+    const gmUrl = 'https://www.google.com/maps/search/' + encodeURIComponent((p.adresse||'') + ', France');
+    const card = document.createElement('a');
+    card.href = gmUrl; card.target = '_blank';
+    card.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);text-decoration:none;color:var(--text);font-size:12px';
+    card.innerHTML = '<span>📍</span><div><div style="font-weight:600;color:var(--accent);font-size:12px">' + p.client + '</div><div style="color:var(--muted);font-size:11px;margin-top:2px">' + (p.adresse||'') + '</div></div>';
+    panel.appendChild(card);
+  });
+  cardMap.appendChild(panel);
+}
 // ============================================================
 // CONFIG API GOOGLE SHEETS
 // ============================================================

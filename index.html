@@ -286,6 +286,9 @@
     <button class="nav-item" onclick="showPage('contacts')">
       <span class="icon">◎</span> Répertoire
     </button>
+    <button class="nav-item" onclick="showPage('planning')">
+      <span class="icon">📅</span> Planning
+    </button>
   <div style="padding:16px 12px;border-top:1px solid var(--border)">
     <button class="nav-item" onclick="loadFromSheets()" style="color:var(--accent);width:100%">
       <span class="icon">↻</span> Sync Sheets
@@ -556,6 +559,32 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="page" id="page-planning">
+  <div class="page-header">
+    <div class="page-title">Planning multi-chantiers</div>
+    <div class="page-subtitle">Vue Gantt — tous les chantiers</div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+    <div style="display:flex;gap:4px;background:var(--surface2);border-radius:8px;padding:4px">
+      <button id="plan-btn-chantier" onclick="planSetView('chantier')"
+        style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;background:var(--accent);color:#1a1200">
+        Par chantier
+      </button>
+      <button id="plan-btn-lot" onclick="planSetView('lot')"
+        style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;background:transparent;color:var(--muted)">
+        Par lot
+      </button>
+    </div>
+    <div id="plan-legend" style="display:flex;gap:16px;flex-wrap:wrap"></div>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div id="plan-gantt" style="overflow-x:auto;padding:0 0 16px"></div>
+  </div>
+</div>
+
+
 
 <script>
 // ============================================================
@@ -693,6 +722,7 @@ function showPage(id) {
       b.classList.add('active');
   });
   if (id === 'projets') renderProjects();
+  if (id === 'planning') planRender();
   if (id === 'financier') { finInitKpis(); finShowList(); }
   if (id === 'administratif') renderAdm();
   if (id === 'contacts') renderContacts();
@@ -1198,6 +1228,216 @@ document.addEventListener('DOMContentLoaded', () => {
   // Puis charger les données fraîches depuis Sheets
   setTimeout(() => loadFromSheets(), 500);
 });
+
+// ===================== PLANNING GANTT =====================
+const PLAN_CHANTIERS = [
+  {
+    id: 'sci_cds', nom: 'SCI CDS',
+    debut: '2025-11-17', fin: '2026-07-11', couleur: '#60a5fa',
+    lots: [
+      { nom: 'Gros Œuvre', debut: '2025-11-24', fin: '2025-11-30', pct: 93 },
+      { nom: 'Ouvertures', debut: '2025-11-17', fin: '2025-11-23', pct: 0 },
+      { nom: 'Charpente', debut: '2025-12-01', fin: '2025-12-21', pct: 100 },
+      { nom: 'Plancher', debut: '2025-11-24', fin: '2025-12-07', pct: 0 },
+      { nom: 'Menuiserie', debut: '2026-01-05', fin: '2026-01-09', pct: 56 },
+      { nom: 'Plâtrerie', debut: '2026-03-09', fin: '2026-05-10', pct: 0 },
+      { nom: 'Électricité', debut: '2026-03-12', fin: '2026-05-10', pct: 0 },
+      { nom: 'Plomberie', debut: '2026-03-12', fin: '2026-05-10', pct: 0 },
+      { nom: 'Climatisation', debut: '2026-03-12', fin: '2026-05-10', pct: 0 },
+      { nom: 'Peinture', debut: '2026-05-11', fin: '2026-06-07', pct: 0 },
+      { nom: 'Carrelage', debut: '2026-05-18', fin: '2026-06-07', pct: 0 },
+      { nom: 'Sol PVC', debut: '2026-06-08', fin: '2026-06-28', pct: 0 },
+      { nom: 'Cuisine', debut: '2026-06-29', fin: '2026-07-11', pct: 0 },
+      { nom: 'Étanchéité', debut: '2026-03-02', fin: '2026-03-05', pct: 0 },
+    ]
+  },
+  {
+    id: 'olympiades', nom: 'Les Olympiades',
+    debut: '2026-02-02', fin: '2026-06-28', couleur: '#4ade80',
+    lots: [
+      { nom: 'Démolition / Maçonnerie', debut: '2026-02-02', fin: '2026-02-15', pct: null },
+      { nom: 'Charpente / Couverture', debut: '2026-02-02', fin: '2026-02-22', pct: null },
+      { nom: 'Menuiseries', debut: '2026-03-02', fin: '2026-03-15', pct: null },
+      { nom: 'Plâtrerie', debut: '2026-03-09', fin: '2026-04-17', pct: null },
+      { nom: 'Électricité', debut: '2026-03-09', fin: '2026-04-24', pct: null },
+      { nom: 'Plomberie', debut: '2026-03-09', fin: '2026-05-22', pct: null },
+      { nom: 'Climatisation', debut: '2026-05-04', fin: '2026-05-08', pct: null },
+      { nom: 'Peinture', debut: '2026-04-20', fin: '2026-05-17', pct: null },
+      { nom: 'Carrelage', debut: '2026-04-27', fin: '2026-05-17', pct: null },
+      { nom: 'Sol / Ragréage', debut: '2026-05-25', fin: '2026-06-14', pct: null },
+      { nom: 'Cuisine', debut: '2026-06-15', fin: '2026-06-28', pct: null },
+    ]
+  },
+  {
+    id: 'javaloyes2', nom: 'JAVALOYES 2',
+    debut: '2026-02-23', fin: '2026-08-09', couleur: '#a78bfa',
+    lots: [
+      { nom: 'Gros Œuvre / Démolition', debut: '2026-02-23', fin: '2026-04-17', pct: 0 },
+      { nom: 'Charpente', debut: '2026-03-16', fin: '2026-04-05', pct: 0 },
+      { nom: 'Menuiserie', debut: '2026-04-06', fin: '2026-04-12', pct: 0 },
+      { nom: 'Plâtrerie', debut: '2026-04-13', fin: '2026-06-21', pct: 0 },
+      { nom: 'Électricité', debut: '2026-04-13', fin: '2026-06-21', pct: 0 },
+      { nom: 'Plomberie / Clim', debut: '2026-04-13', fin: '2026-06-21', pct: 0 },
+      { nom: 'Peinture', debut: '2026-06-22', fin: '2026-07-26', pct: 0 },
+      { nom: 'Carrelage', debut: '2026-06-22', fin: '2026-07-12', pct: 0 },
+      { nom: 'Sol PVC', debut: '2026-07-06', fin: '2026-07-26', pct: 0 },
+      { nom: 'Cuisine', debut: '2026-07-27', fin: '2026-08-09', pct: 0 },
+    ]
+  }
+];
+
+const PLAN_LOTS_KEYS = [
+  { key: 'gros', label: 'Gros Œuvre / Démolition', color: '#fb923c', match: ['gros', 'demol', 'maçon', 'ouverture', 'plancher', 'etanch'] },
+  { key: 'charpente', label: 'Charpente / Couverture', color: '#f59e0b', match: ['charpente', 'couverture', 'toit', 'trémie'] },
+  { key: 'menuiserie', label: 'Menuiserie', color: '#a78bfa', match: ['menuiserie', 'menuiseries'] },
+  { key: 'platrerie', label: 'Plâtrerie', color: '#60a5fa', match: ['plâtrerie', 'platrerie', 'sad', 'plafond', 'doublage', 'cloison', 'jointage', 'ossature'] },
+  { key: 'electricite', label: 'Électricité', color: '#fbbf24', match: ['électricité', 'electricite', 'électr'] },
+  { key: 'plomberie', label: 'Plomberie', color: '#2dd4bf', match: ['plomberie', 'plomb', 'alimentation eu', 'réseaux eu'] },
+  { key: 'climatisation', label: 'Climatisation', color: '#06b6d4', match: ['clim', 'climatisation'] },
+  { key: 'peinture', label: 'Peinture', color: '#f472b6', match: ['peinture'] },
+  { key: 'carrelage', label: 'Carrelage', color: '#f97316', match: ['carrelage'] },
+  { key: 'sols', label: 'Sols / Revêtement', color: '#84cc16', match: ['sol pvc', 'sol /', 'revêtement', 'ragréage', 'pose des sols'] },
+  { key: 'cuisine', label: 'Cuisine', color: '#c8a96e', match: ['cuisine'] },
+];
+
+let planView = 'chantier';
+
+function planGetLotKey(nom) {
+  const n = nom.toLowerCase();
+  for (const k of PLAN_LOTS_KEYS) {
+    if (k.match.some(m => n.includes(m))) return k;
+  }
+  return { key: 'other', label: 'Autres', color: '#6b7280' };
+}
+
+function planDateToX(dateStr, minD, totalDays) {
+  return ((new Date(dateStr) - minD) / 86400000) / totalDays * 100;
+}
+function planDaysToW(d1, d2, totalDays) {
+  return ((new Date(d2) - new Date(d1)) / 86400000) / totalDays * 100;
+}
+function planFmt(d) {
+  return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'2-digit' });
+}
+
+function planRender() {
+  const allD = PLAN_CHANTIERS.flatMap(c => c.lots.flatMap(l => [new Date(l.debut), new Date(l.fin)]));
+  const minD = new Date(Math.min(...allD)); minD.setDate(1);
+  const maxD = new Date(Math.max(...allD)); maxD.setMonth(maxD.getMonth()+1, 1);
+  const totalDays = (maxD - minD) / 86400000;
+  const today = new Date();
+  const todayX = planDateToX(today.toISOString().slice(0,10), minD, totalDays);
+  const LW = 180; // label width px
+
+  // Mois header
+  let months = '';
+  let cur = new Date(minD);
+  while (cur < maxD) {
+    const end = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+    const endC = end < maxD ? end : maxD;
+    const w = ((endC - cur) / 86400000) / totalDays * 100;
+    months += `<div style="width:${w}%;text-align:center;font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:1px;padding:6px 0;border-right:1px solid var(--border);flex-shrink:0">${cur.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'})}</div>`;
+    cur = end;
+  }
+  const header = `<div style="display:flex;margin-left:${LW}px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:20">${months}</div>`;
+
+  // Ligne aujourd'hui (overlay)
+  const todayMarker = `<div style="position:absolute;left:calc(${LW}px + ${todayX}%);top:0;bottom:0;width:2px;background:#f87171;opacity:0.7;z-index:5;pointer-events:none">
+    <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);font-size:9px;color:#f87171;white-space:nowrap;background:var(--surface);padding:1px 4px;border-radius:3px">Aujourd'hui</div>
+  </div>`;
+
+  let body = '';
+
+  if (planView === 'chantier') {
+    body = PLAN_CHANTIERS.map(c => {
+      const rows = c.lots.map(lot => {
+        const x = planDateToX(lot.debut, minD, totalDays);
+        const w = planDaysToW(lot.debut, lot.fin, totalDays);
+        const pctTxt = lot.pct !== null ? ` — ${lot.pct}%` : '';
+        return `<div style="display:grid;grid-template-columns:${LW}px 1fr;align-items:center;border-bottom:1px solid var(--border);transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,0.03)'" onmouseleave="this.style.background=''">
+          <div style="font-size:11px;color:var(--muted);padding:6px 8px 6px 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${lot.nom}</div>
+          <div style="position:relative;height:28px">
+            <div title="${lot.nom}${pctTxt} | ${planFmt(lot.debut)} → ${planFmt(lot.fin)}"
+              style="position:absolute;left:${x}%;width:${Math.max(w,0.5)}%;height:14px;top:7px;border-radius:3px;background:${c.couleur};opacity:0.75;cursor:default"></div>
+          </div>
+        </div>`;
+      }).join('');
+
+      const cx = planDateToX(c.debut, minD, totalDays);
+      const cw = planDaysToW(c.debut, c.fin, totalDays);
+      return `
+        <div style="margin-bottom:4px">
+          <div style="display:grid;grid-template-columns:${LW}px 1fr;align-items:center;background:var(--surface2);border-radius:8px 8px 0 0;border:1px solid var(--border);border-bottom:none;padding:8px 0">
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--text);padding-left:12px;display:flex;align-items:center;gap:8px">
+              <span style="width:10px;height:10px;border-radius:2px;background:${c.couleur};display:inline-block;flex-shrink:0"></span>
+              <span>${c.nom}</span>
+            </div>
+            <div style="position:relative;height:28px">
+              <div style="position:absolute;left:${cx}%;width:${cw}%;height:22px;top:3px;border-radius:4px;background:${c.couleur};opacity:0.15"></div>
+            </div>
+          </div>
+          <div style="border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;overflow:hidden">${rows}</div>
+        </div>`;
+    }).join('');
+
+  } else {
+    // Vue par lot
+    const byLot = {};
+    PLAN_CHANTIERS.forEach(c => {
+      c.lots.forEach(lot => {
+        const k = planGetLotKey(lot.nom);
+        if (!byLot[k.key]) byLot[k.key] = { ...k, items: [] };
+        byLot[k.key].items.push({ chantier: c, lot });
+      });
+    });
+
+    body = Object.values(byLot).map(lot => {
+      const rows = lot.items.map(item => {
+        const x = planDateToX(item.lot.debut, minD, totalDays);
+        const w = planDaysToW(item.lot.debut, item.lot.fin, totalDays);
+        const pctTxt = item.lot.pct !== null ? ` — ${item.lot.pct}%` : '';
+        return `<div style="display:grid;grid-template-columns:${LW}px 1fr;align-items:center;border-bottom:1px solid var(--border)" onmouseenter="this.style.background='rgba(255,255,255,0.03)'" onmouseleave="this.style.background=''">
+          <div style="font-size:11px;color:var(--muted);padding:6px 8px 6px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;background:${item.chantier.couleur};flex-shrink:0"></span>
+            ${item.chantier.nom}
+          </div>
+          <div style="position:relative;height:28px">
+            <div title="${item.chantier.nom} — ${item.lot.nom}${pctTxt} | ${planFmt(item.lot.debut)} → ${planFmt(item.lot.fin)}"
+              style="position:absolute;left:${x}%;width:${Math.max(w,0.5)}%;height:16px;top:6px;border-radius:3px;background:${lot.color};cursor:default"></div>
+          </div>
+        </div>`;
+      }).join('');
+
+      return `<div style="margin-bottom:12px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:${lot.color};padding:10px 0 6px;display:flex;align-items:center;gap:10px">
+          ${lot.label}
+          <span style="flex:1;height:1px;background:var(--border);display:inline-block"></span>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">${rows}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Légende
+  document.getElementById('plan-legend').innerHTML = PLAN_CHANTIERS.map(c =>
+    `<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+      <span style="width:10px;height:10px;border-radius:2px;background:${c.couleur};display:inline-block"></span>${c.nom}
+    </div>`
+  ).join('');
+
+  document.getElementById('plan-gantt').innerHTML =
+    `<div style="position:relative">${header}<div style="position:relative">${todayMarker}${body}</div></div>`;
+}
+
+function planSetView(v) {
+  planView = v;
+  document.getElementById('plan-btn-chantier').style.background = v === 'chantier' ? 'var(--accent)' : 'transparent';
+  document.getElementById('plan-btn-chantier').style.color = v === 'chantier' ? '#1a1200' : 'var(--muted)';
+  document.getElementById('plan-btn-lot').style.background = v === 'lot' ? 'var(--accent)' : 'transparent';
+  document.getElementById('plan-btn-lot').style.color = v === 'lot' ? '#1a1200' : 'var(--muted)';
+  planRender();
+}
+
 </script>
 </body>
 </html>

@@ -778,8 +778,7 @@ function apiGet(action) {
 }
 
 function apiPost(data) {
-  // Content-Type text/plain évite le preflight CORS tout en permettant un vrai POST
-  // Google Apps Script lit les données via e.postData.contents
+  // Content-Type text/plain évite le preflight CORS — Google Apps Script lit via e.postData.contents
   return fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
@@ -1342,40 +1341,65 @@ function renderAdm() {
 function openAdmDetail(dossier) {
   const a = allAdm.find(x => x.dossier === dossier);
   if (!a) return;
-  const keys = Object.keys(a).filter(k => !['dossier'].includes(k));
+
   document.getElementById('modal-proj-title').textContent = a.dossier;
   document.getElementById('modal-proj-sub').textContent = a['Adresse Chantier'] || '';
   document.getElementById('modal-proj-save').onclick = () => saveAdm(dossier);
 
+  // Champs texte libre (pas de menu déroulant)
+  const CHAMPS_TEXTE = ['dossier','Dossier client','MAITRISE D'ŒUVRE','Adresse Chantier','Adresse Client','Mail','Tél','COMMENTAIRES','N°DP','N°PC','Aides'];
+  // Champs à exclure du formulaire (gérés séparément ou non pertinents)
+  const CHAMPS_EXCLUS = ['Adresse Chantier','Adresse Client','Aides'];
+  // Options du menu déroulant pour les champs statut
+  const STATUS_OPTIONS = ['','a faire','en cours','signé','ok','payé','envoyé','déposé','validé','non compris'];
+
+  function fieldId(k) { return 'adm-' + k.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+  function renderField(k, val) {
+    const id = fieldId(k);
+    const isTexte = CHAMPS_TEXTE.includes(k);
+    if (isTexte) {
+      return `<div class="form-group">
+        <label>${k}</label>
+        <input id="${id}" value="${(val||'').toString().replace(/"/g,'&quot;')}">
+      </div>`;
+    } else {
+      const opts = STATUS_OPTIONS.map(v =>
+        `<option ${val === v ? 'selected' : ''} value="${v}">${v || '—'}</option>`
+      ).join('');
+      return `<div class="adm-item">
+        <div class="adm-item-label">${k}</div>
+        <select id="${id}" style="width:100%;padding:4px 8px;font-size:12px">${opts}</select>
+      </div>`;
+    }
+  }
+
+  // Séparer les clés en deux groupes
+  const allKeys = Object.keys(a).filter(k => k !== 'dossier' && !CHAMPS_EXCLUS.includes(k));
+  const champsTexte = allKeys.filter(k => CHAMPS_TEXTE.includes(k) && k !== 'Adresse Chantier');
+  const champsStatut = allKeys.filter(k => !CHAMPS_TEXTE.includes(k));
+
   const body = document.getElementById('modal-proj-body');
   body.innerHTML = `
     <div class="form-grid" style="margin-bottom:20px">
-      <div class="form-group"><label>Mail</label><input id="adm-mail" value="${a['Mail'] || ''}"></div>
-      <div class="form-group"><label>Téléphone</label><input id="adm-tel" value="${a['Tél'] || ''}"></div>
-      <div class="form-group full"><label>Commentaires</label><textarea id="adm-comment">${a['COMMENTAIRES'] || ''}</textarea></div>
+      ${champsTexte.map(k => renderField(k, a[k])).join('')}
     </div>
     <div class="section-sep">État des démarches</div>
     <div class="adm-grid">
-      ${keys.filter(k => !['Aides','Adresse Chantier','Adresse Client','Mail','Tél','COMMENTAIRES','N°DP','N°PC'].includes(k)).map(k => `
-        <div class="adm-item">
-          <div class="adm-item-label">${k}</div>
-          <select id="adm-${k.replace(/[^a-zA-Z]/g,'_')}" style="width:100%;padding:4px 8px;font-size:12px">
-            ${['','a faire','en cours','signé','ok','payé','envoyé','déposé','validé','non compris'].map(v => `<option ${a[k] === v ? 'selected' : ''} value="${v}">${v || '—'}</option>`).join('')}
-          </select>
-        </div>`).join('')}
+      ${champsStatut.map(k => renderField(k, a[k])).join('')}
     </div>`;
+
   document.getElementById('modal-project').classList.add('open');
 }
 
 function saveAdm(dossier) {
   const a = allAdm.find(x => x.dossier === dossier);
   if (!a) return;
-  a['Mail'] = document.getElementById('adm-mail')?.value || a['Mail'];
-  a['Tél'] = document.getElementById('adm-tel')?.value || a['Tél'];
-  a['COMMENTAIRES'] = document.getElementById('adm-comment')?.value || '';
-  const keys = Object.keys(a).filter(k => !['dossier','Aides','Adresse Chantier','Adresse Client','Mail','Tél','COMMENTAIRES','N°DP','N°PC'].includes(k));
-  keys.forEach(k => {
-    const el = document.getElementById('adm-' + k.replace(/[^a-zA-Z]/g,'_'));
+  // Récupérer tous les champs du formulaire dynamiquement
+  const CHAMPS_EXCLUS = ['dossier','Adresse Chantier','Adresse Client','Aides'];
+  Object.keys(a).filter(k => !CHAMPS_EXCLUS.includes(k)).forEach(k => {
+    const id = 'adm-' + k.replace(/[^a-zA-Z0-9]/g,'_');
+    const el = document.getElementById(id);
     if (el) a[k] = el.value || null;
   });
   closeModal('modal-project');

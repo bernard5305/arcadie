@@ -259,6 +259,156 @@
     box-shadow: 0 1px 0 var(--border);
   }
 
+
+  
+  
+  
+
+  
+  
+  
+  
+  
+
+  .controls {
+    padding: 16px 32px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .view-toggle { display: flex; gap: 4px; background: var(--bg); border-radius: 8px; padding: 4px; }
+  .view-btn {
+    padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    background: transparent; color: var(--muted); transition: all .2s;
+  }
+  .view-btn.active { background: var(--accent); color: #1a1200; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-left: auto; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* GANTT */
+  .gantt-wrap { overflow-x: auto; padding: 24px 32px; }
+  .gantt { min-width: 900px; }
+
+  .gantt-
+  .gantt-header-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--muted); padding: 8px 0 8px 8px;
+  }
+  .months-row { display: flex; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .month-cell {
+    text-align: center; font-size: 11px; font-weight: 600; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1px; padding: 6px 0;
+    border-right: 1px solid var(--border);
+  }
+  .today-line {
+    position: absolute; top: 0; bottom: 0; width: 2px;
+    background: var(--red); opacity: 0.8; z-index: 10;
+    pointer-events: none;
+  }
+  .today-line::before {
+    content: 'Aujourd\'hui';
+    position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+    font-size: 9px; color: var(--red); white-space: nowrap; font-family: 'DM Sans', sans-serif;
+  }
+
+  /* Chantier section */
+  .chantier-section { margin-bottom: 8px; }
+  .chantier-
+  .chantier-name {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
+    color: var(--text); padding-left: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .chantier-period { font-size: 10px; color: var(--muted); font-weight: 400; }
+  .chevron { transition: transform .2s; font-size: 10px; color: var(--muted); }
+  .chantier-section.collapsed .chevron { transform: rotate(-90deg); }
+  .chantier-section.collapsed .lots-container { display: none; }
+
+  .lots-container {
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+  }
+
+  .lot-row {
+    display: grid; align-items: center;
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .lot-row:last-child { border-bottom: none; }
+  .lot-row:hover { background: rgba(200,169,110,0.04); }
+  .lot-row.is-parent { background: rgba(255,255,255,0.02); }
+
+  .lot-name {
+    font-size: 12px; color: var(--text); padding: 8px 8px 8px 12px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .lot-row.is-parent .lot-name { font-weight: 600; color: var(--accent); font-size: 12px; }
+  .lot-row.is-child .lot-name { padding-left: 24px; color: var(--muted); font-size: 11px; }
+
+  .bar-cell { position: relative; height: 32px; }
+  .bar {
+    position: absolute; height: 18px; top: 7px;
+    border-radius: 4px; display: flex; align-items: center; padding: 0 6px;
+    font-size: 10px; color: rgba(0,0,0,0.7); font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: opacity .2s; cursor: default;
+  }
+  .bar:hover { opacity: 0.85; filter: brightness(1.1); }
+  .lot-row.is-parent .bar { height: 22px; top: 5px; border-radius: 5px; }
+  .lot-row.is-child .bar { height: 14px; top: 9px; opacity: 0.8; }
+
+  /* Vue par corps de métier */
+  .corps-section { margin-bottom: 20px; }
+  .corps-title {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
+    color: var(--text); padding: 12px 0 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .corps-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .corps-bar-row {
+    display: grid; align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding: 4px 0;
+  }
+  .corps-bar-row:last-child { border: none; }
+  .corps-chantier-name { font-size: 12px; color: var(--muted); padding-left: 12px; }
+
+  .tooltip {
+    position: fixed; z-index: 200; pointer-events: none;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; font-size: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    max-width: 220px;
+    opacity: 0; transition: opacity .15s;
+  }
+  .tooltip.visible { opacity: 1; }
+  .tooltip-title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .tooltip-dates { color: var(--muted); font-size: 11px; }
+  .tooltip-pct { color: var(--accent); font-size: 11px; margin-top: 3px; }
+
+  .upload-zone {
+    margin: 0 32px 24px;
+    border: 2px dashed var(--border); border-radius: 12px;
+    padding: 24px; text-align: center;
+    color: var(--muted); font-size: 13px; cursor: pointer;
+    transition: border-color .2s, background .2s;
+  }
+  .upload-zone:hover { border-color: var(--accent); background: rgba(200,169,110,0.04); }
+  .upload-zone input { display: none; }
+
+  .stats-bar {
+    display: flex; gap: 24px; padding: 12px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-wrap: wrap;
+  }
+  .stat { font-size: 12px; color: var(--muted); }
+  .stat strong { color: var(--text); font-weight: 600; }
+
 </style>
 </head>
 <body>
@@ -559,29 +709,29 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
 <div class="page" id="page-planning">
   <div class="page-header">
     <div class="page-title">Planning multi-chantiers</div>
     <div class="page-subtitle">Vue Gantt — tous les chantiers</div>
   </div>
 
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
-    <div style="display:flex;gap:4px;background:var(--surface2);border-radius:8px;padding:4px">
-      <button id="plan-btn-chantier" onclick="planSetView('chantier')"
-        style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;background:var(--accent);color:#1a1200">
-        Par chantier
-      </button>
-      <button id="plan-btn-lot" onclick="planSetView('lot')"
-        style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;background:transparent;color:var(--muted)">
-        Par lot
-      </button>
+  <div id="gantt-stats-bar" style="display:flex;gap:24px;padding:12px 0 16px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:16px"></div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+    <div class="view-toggle" style="display:flex;gap:4px;background:var(--surface2);border-radius:8px;padding:4px">
+      <button class="view-btn active" onclick="ganttSetView('chantier')">Par chantier</button>
+      <button class="view-btn" onclick="ganttSetView('corps')">Par lot</button>
     </div>
-    <div id="plan-legend" style="display:flex;gap:16px;flex-wrap:wrap"></div>
+    <div id="gantt-legend" style="display:flex;gap:16px;flex-wrap:wrap"></div>
   </div>
 
-  <div class="card" style="padding:0;overflow:visible">
-    <div id="plan-gantt" style="overflow-x:auto;padding:0 0 16px;min-width:600px"></div>
+  <div class="card" style="padding:0">
+    <div id="gantt-inner" style="overflow-x:auto;min-width:0"></div>
   </div>
+
+  <div class="tooltip" id="gantt-tooltip"></div>
+</div>
 </div>
 
 
@@ -722,7 +872,7 @@ function showPage(id) {
       b.classList.add('active');
   });
   if (id === 'projets') renderProjects();
-  if (id === 'planning') planRender();
+  if (id === 'planning') ganttRender();
   if (id === 'financier') { finInitKpis(); finShowList(); }
   if (id === 'administratif') renderAdm();
   if (id === 'contacts') renderContacts();
@@ -1229,214 +1379,303 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => loadFromSheets(), 500);
 });
 
-// ===================== PLANNING GANTT =====================
-const PLAN_CHANTIERS = [
+
+// ===================== DONNÉES =====================
+const GANTT_CHANTIERS = [
   {
-    id: 'sci_cds', nom: 'SCI CDS',
-    debut: '2025-11-17', fin: '2026-07-11', couleur: '#60a5fa',
+    id: 'sci_cds',
+    nom: 'SCI CDS',
+    debut: '2025-11-17',
+    fin: '2026-07-11',
+    couleur: '#60a5fa',
     lots: [
-      { nom: 'Gros Œuvre', debut: '2025-11-24', fin: '2025-11-30', pct: 93 },
-      { nom: 'Ouvertures', debut: '2025-11-17', fin: '2025-11-23', pct: 0 },
-      { nom: 'Charpente', debut: '2025-12-01', fin: '2025-12-21', pct: 100 },
-      { nom: 'Plancher', debut: '2025-11-24', fin: '2025-12-07', pct: 0 },
-      { nom: 'Menuiserie', debut: '2026-01-05', fin: '2026-01-09', pct: 56 },
-      { nom: 'Plâtrerie', debut: '2026-03-09', fin: '2026-05-10', pct: 0 },
-      { nom: 'Électricité', debut: '2026-03-12', fin: '2026-05-10', pct: 0 },
-      { nom: 'Plomberie', debut: '2026-03-12', fin: '2026-05-10', pct: 0 },
-      { nom: 'Climatisation', debut: '2026-03-12', fin: '2026-05-10', pct: 0 },
-      { nom: 'Peinture', debut: '2026-05-11', fin: '2026-06-07', pct: 0 },
-      { nom: 'Carrelage', debut: '2026-05-18', fin: '2026-06-07', pct: 0 },
-      { nom: 'Sol PVC', debut: '2026-06-08', fin: '2026-06-28', pct: 0 },
-      { nom: 'Cuisine', debut: '2026-06-29', fin: '2026-07-11', pct: 0 },
-      { nom: 'Étanchéité', debut: '2026-03-02', fin: '2026-03-05', pct: 0 },
+      { nom: '1 - Gros Œuvre', debut: '2025-11-24', fin: '2025-11-30', pct: 93, parent: true },
+      { nom: 'Ouvertures', debut: '2025-11-17', fin: '2025-11-23', pct: 0, parent: false },
+      { nom: '2 - Charpente', debut: '2025-12-01', fin: '2025-12-21', pct: 100, parent: true },
+      { nom: 'PLANCHER', debut: '2025-11-24', fin: '2025-12-07', pct: 0, parent: false },
+      { nom: '3 - Menuiserie', debut: '2026-01-05', fin: '2026-01-09', pct: 56, parent: true },
+      { nom: '4 - Plâtrerie', debut: '2026-03-09', fin: '2026-05-10', pct: 0, parent: true },
+      { nom: 'Mise en œuvre SAD', debut: '2026-03-09', fin: '2026-03-29', pct: 0, parent: false },
+      { nom: 'Ossature plafonds', debut: '2026-03-23', fin: '2026-04-12', pct: 0, parent: false },
+      { nom: 'Doublage et cloison', debut: '2026-03-23', fin: '2026-04-12', pct: 0, parent: false },
+      { nom: 'Jointage', debut: '2026-04-13', fin: '2026-04-26', pct: 0, parent: false },
+      { nom: '5 - Électricité', debut: '2026-03-12', fin: '2026-05-10', pct: 0, parent: true },
+      { nom: 'Alimentations élec', debut: '2026-03-12', fin: '2026-03-26', pct: 0, parent: false },
+      { nom: 'Appareillage élec', debut: '2026-04-27', fin: '2026-05-10', pct: 0, parent: false },
+      { nom: '6 - Plomberie', debut: '2026-03-12', fin: '2026-05-10', pct: 0, parent: true },
+      { nom: 'Alimentation EU', debut: '2026-03-12', fin: '2026-03-25', pct: 0, parent: false },
+      { nom: 'Appareillage plomb', debut: '2026-04-27', fin: '2026-05-10', pct: 0, parent: false },
+      { nom: '7 - Climatisation', debut: '2026-03-12', fin: '2026-05-10', pct: 0, parent: true },
+      { nom: 'Alimentation clim', debut: '2026-03-12', fin: '2026-03-25', pct: 0, parent: false },
+      { nom: 'Pose groupe', debut: '2026-04-26', fin: '2026-05-09', pct: 0, parent: false },
+      { nom: '8 - Peinture', debut: '2026-05-11', fin: '2026-06-07', pct: 0, parent: true },
+      { nom: '9 - Revêtement sol PVC', debut: '2026-06-08', fin: '2026-06-28', pct: 0, parent: true },
+      { nom: '10 - Carrelage', debut: '2026-05-18', fin: '2026-06-07', pct: 0, parent: true },
+      { nom: '11 - Cuisine', debut: '2026-06-29', fin: '2026-07-11', pct: 0, parent: true },
+      { nom: 'Étanchéité', debut: '2026-03-02', fin: '2026-03-05', pct: 0, parent: false },
     ]
   },
   {
-    id: 'olympiades', nom: 'Les Olympiades',
-    debut: '2026-02-02', fin: '2026-06-28', couleur: '#4ade80',
+    id: 'olympiades',
+    nom: 'Les Olympiades',
+    debut: '2026-02-02',
+    fin: '2026-06-28',
+    couleur: '#4ade80',
     lots: [
-      { nom: 'Démolition / Maçonnerie', debut: '2026-02-02', fin: '2026-02-15', pct: null },
-      { nom: 'Charpente / Couverture', debut: '2026-02-02', fin: '2026-02-22', pct: null },
-      { nom: 'Menuiseries', debut: '2026-03-02', fin: '2026-03-15', pct: null },
-      { nom: 'Plâtrerie', debut: '2026-03-09', fin: '2026-04-17', pct: null },
-      { nom: 'Électricité', debut: '2026-03-09', fin: '2026-04-24', pct: null },
-      { nom: 'Plomberie', debut: '2026-03-09', fin: '2026-05-22', pct: null },
-      { nom: 'Climatisation', debut: '2026-05-04', fin: '2026-05-08', pct: null },
-      { nom: 'Peinture', debut: '2026-04-20', fin: '2026-05-17', pct: null },
-      { nom: 'Carrelage', debut: '2026-04-27', fin: '2026-05-17', pct: null },
-      { nom: 'Sol / Ragréage', debut: '2026-05-25', fin: '2026-06-14', pct: null },
-      { nom: 'Cuisine', debut: '2026-06-15', fin: '2026-06-28', pct: null },
+      { nom: 'Lot 1 - Démolition / Maçonnerie', debut: '2026-02-02', fin: '2026-02-15', pct: null, parent: true },
+      { nom: 'Démolition', debut: '2026-02-02', fin: '2026-02-06', pct: null, parent: false },
+      { nom: 'Gros œuvre - Réseaux', debut: '2026-02-09', fin: '2026-02-13', pct: null, parent: false },
+      { nom: 'Lot 2 - Charpente / Couverture', debut: '2026-02-02', fin: '2026-02-22', pct: null, parent: true },
+      { nom: 'Reprise couverture', debut: '2026-02-02', fin: '2026-02-13', pct: null, parent: false },
+      { nom: 'Modification trémie', debut: '2026-02-16', fin: '2026-02-20', pct: null, parent: false },
+      { nom: 'Menuiseries', debut: '2026-03-02', fin: '2026-03-15', pct: null, parent: true },
+      { nom: 'Lot 4 - Plâtrerie', debut: '2026-03-09', fin: '2026-04-03', pct: null, parent: true },
+      { nom: 'Mise en œuvre SAD', debut: '2026-03-09', fin: '2026-03-13', pct: null, parent: false },
+      { nom: 'Ossature plafonds', debut: '2026-03-16', fin: '2026-04-03', pct: null, parent: false },
+      { nom: 'Doublages et cloisons', debut: '2026-03-16', fin: '2026-04-03', pct: null, parent: false },
+      { nom: 'Jointage', debut: '2026-04-06', fin: '2026-04-17', pct: null, parent: false },
+      { nom: 'Lot 5 - Électricité', debut: '2026-03-09', fin: '2026-04-24', pct: null, parent: true },
+      { nom: 'Alimentations élec', debut: '2026-03-09', fin: '2026-03-20', pct: null, parent: false },
+      { nom: 'Appareillage élec', debut: '2026-04-13', fin: '2026-04-24', pct: null, parent: false },
+      { nom: 'Lot 6 - Plomberie', debut: '2026-03-09', fin: '2026-05-22', pct: null, parent: true },
+      { nom: 'Alimentation EU', debut: '2026-03-09', fin: '2026-03-20', pct: null, parent: false },
+      { nom: 'Appareillage plomb', debut: '2026-05-11', fin: '2026-05-22', pct: null, parent: false },
+      { nom: 'Climatisations', debut: '2026-05-04', fin: '2026-05-08', pct: null, parent: false },
+      { nom: 'Lot 7 - Peinture', debut: '2026-04-20', fin: '2026-05-17', pct: null, parent: true },
+      { nom: 'Lot 8 - Sols', debut: '2026-05-25', fin: '2026-06-14', pct: null, parent: true },
+      { nom: 'Ragréage', debut: '2026-05-25', fin: '2026-05-29', pct: null, parent: false },
+      { nom: 'Pose des sols', debut: '2026-06-01', fin: '2026-06-12', pct: null, parent: false },
+      { nom: 'Lot 9 - Carrelage', debut: '2026-04-27', fin: '2026-05-17', pct: null, parent: true },
+      { nom: 'Lot 10 - Cuisine', debut: '2026-06-15', fin: '2026-06-28', pct: null, parent: true },
     ]
   },
   {
-    id: 'javaloyes2', nom: 'JAVALOYES 2',
-    debut: '2026-02-23', fin: '2026-08-09', couleur: '#a78bfa',
+    id: 'javaloyes2',
+    nom: 'JAVALOYES 2 — 6 Appartements',
+    debut: '2026-02-23',
+    fin: '2026-08-09',
+    couleur: '#a78bfa',
     lots: [
-      { nom: 'Gros Œuvre / Démolition', debut: '2026-02-23', fin: '2026-04-17', pct: 0 },
-      { nom: 'Charpente', debut: '2026-03-16', fin: '2026-04-05', pct: 0 },
-      { nom: 'Menuiserie', debut: '2026-04-06', fin: '2026-04-12', pct: 0 },
-      { nom: 'Plâtrerie', debut: '2026-04-13', fin: '2026-06-21', pct: 0 },
-      { nom: 'Électricité', debut: '2026-04-13', fin: '2026-06-21', pct: 0 },
-      { nom: 'Plomberie / Clim', debut: '2026-04-13', fin: '2026-06-21', pct: 0 },
-      { nom: 'Peinture', debut: '2026-06-22', fin: '2026-07-26', pct: 0 },
-      { nom: 'Carrelage', debut: '2026-06-22', fin: '2026-07-12', pct: 0 },
-      { nom: 'Sol PVC', debut: '2026-07-06', fin: '2026-07-26', pct: 0 },
-      { nom: 'Cuisine', debut: '2026-07-27', fin: '2026-08-09', pct: 0 },
+      { nom: '01 - Gros Œuvre', debut: '2026-02-23', fin: '2026-04-17', pct: 0, parent: true },
+      { nom: 'Démol Phase 1', debut: '2026-02-23', fin: '2026-03-01', pct: 0, parent: false },
+      { nom: 'Démol Phase 2', debut: '2026-03-16', fin: '2026-03-29', pct: 0, parent: false },
+      { nom: 'Démol Phase 3', debut: '2026-03-02', fin: '2026-03-15', pct: 0, parent: false },
+      { nom: '02 - Charpente', debut: '2026-03-16', fin: '2026-04-05', pct: 0, parent: true },
+      { nom: '03 - Menuiserie', debut: '2026-04-06', fin: '2026-04-12', pct: 0, parent: true },
+      { nom: '04 - Plâtrerie', debut: '2026-04-13', fin: '2026-06-21', pct: 0, parent: true },
+      { nom: '05 - Électricité', debut: '2026-04-13', fin: '2026-06-21', pct: 0, parent: true },
+      { nom: '06 - Plomberie / Clim', debut: '2026-04-13', fin: '2026-06-21', pct: 0, parent: true },
+      { nom: '07 - Peinture', debut: '2026-06-22', fin: '2026-07-26', pct: 0, parent: true },
+      { nom: '08 - Sol PVC', debut: '2026-07-06', fin: '2026-07-26', pct: 0, parent: true },
+      { nom: '09 - Carrelage', debut: '2026-06-22', fin: '2026-07-12', pct: 0, parent: true },
+      { nom: '10 - Cuisine', debut: '2026-07-27', fin: '2026-08-09', pct: 0, parent: true },
     ]
   }
 ];
 
-const PLAN_LOTS_KEYS = [
-  { key: 'gros', label: 'Gros Œuvre / Démolition', color: '#fb923c', match: ['gros', 'demol', 'maçon', 'ouverture', 'plancher', 'etanch'] },
-  { key: 'charpente', label: 'Charpente / Couverture', color: '#f59e0b', match: ['charpente', 'couverture', 'toit', 'trémie'] },
+// ===================== CALCULS DATES =====================
+const allDates = GANTT_CHANTIERS.flatMap(c => c.lots.flatMap(l => [new Date(l.debut), new Date(l.fin)]));
+const minDate = new Date(Math.min(...allDates));
+const maxDate = new Date(Math.max(...allDates));
+minDate.setDate(1);
+maxDate.setMonth(maxDate.getMonth() + 1, 1);
+
+const totalDays = (maxDate - minDate) / 86400000;
+const today = new Date();
+
+function dateToX(dateStr) {
+  const d = new Date(dateStr);
+  return ((d - minDate) / 86400000) / totalDays * 100;
+}
+function daysToW(d1, d2) {
+  return ((new Date(d2) - new Date(d1)) / 86400000) / totalDays * 100;
+}
+
+// ===================== MOIS HEADER =====================
+function ganttBuildMonthsHeader(labelW) {
+  const months = [];
+  let cur = new Date(minDate);
+  while (cur < maxDate) {
+    const start = new Date(cur);
+    const end = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+    const endCapped = end < maxDate ? end : maxDate;
+    const w = ((endCapped - start) / 86400000) / totalDays * 100;
+    months.push({ label: start.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }), w });
+    cur = end;
+  }
+  return `<div style="display:flex;margin-left:${labelW}px">` +
+    months.map(m => `<div class="month-cell" style="width:${m.w}%">${m.label}</div>`).join('') +
+    '</div>';
+}
+
+// ===================== VUE PAR CHANTIER =====================
+function ganttBuildChantierView(labelW) {
+  const todayX = dateToX(today.toISOString().slice(0,10));
+
+  return GANTT_CHANTIERS.map(c => {
+    const rows = c.lots.map(lot => {
+      const x = dateToX(lot.debut);
+      const w = daysToW(lot.debut, lot.fin);
+      const pctLabel = lot.pct !== null ? ` ${lot.pct}%` : '';
+      return `
+        <div class="lot-row ${lot.parent ? 'is-parent' : 'is-child'}"
+             style="grid-template-columns:${labelW}px 1fr"
+             onmouseenter="showTip(event,'${lot.nom.replace(/'/g,"\\'")}','${lot.debut}','${lot.fin}',${lot.pct})"
+             onmouseleave="hideTip()">
+          <div class="lot-name">${lot.nom}</div>
+          <div class="bar-cell" style="position:relative">
+            <div class="bar" style="left:${x}%;width:${w}%;background:${c.couleur};opacity:${lot.parent?1:0.65}">
+              ${w > 5 ? lot.nom.split(' - ').pop().split(' ').slice(0,2).join(' ') + pctLabel : ''}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="chantier-section" id="sec_${c.id}">
+        <div class="chantier-header" style="grid-template-columns:${labelW}px 1fr" onclick="ganttToggleSection('sec_${c.id}')">
+          <div class="chantier-name">
+            <span class="chevron">▼</span>
+            <span style="width:10px;height:10px;border-radius:2px;background:${c.couleur};display:inline-block"></span>
+            ${c.nom}
+            <span class="chantier-period">${fmtDate(c.debut)} → ${fmtDate(c.fin)}</span>
+          </div>
+          <div class="bar-cell" style="position:relative">
+            <div class="bar" style="left:${dateToX(c.debut)}%;width:${daysToW(c.debut,c.fin)}%;background:${c.couleur};opacity:0.2;height:22px;top:5px"></div>
+            <div class="today-line" style="left:${todayX}%"></div>
+          </div>
+        </div>
+        <div class="lots-container">${rows}</div>
+      </div>`;
+  }).join('');
+}
+
+// ===================== VUE PAR CORPS =====================
+const CORPS_KEYS = [
+  { key: 'gros', label: 'Gros Œuvre / Démolition', color: '#fb923c', match: ['gros', 'demol', 'maçon', 'béton', 'ouverture', 'plancher'] },
+  { key: 'charpente', label: 'Charpente / Couverture', color: '#f59e0b', match: ['charpente', 'couverture', 'toit', 'trémie', 'etanch'] },
   { key: 'menuiserie', label: 'Menuiserie', color: '#a78bfa', match: ['menuiserie', 'menuiseries'] },
-  { key: 'platrerie', label: 'Plâtrerie', color: '#60a5fa', match: ['plâtrerie', 'platrerie', 'sad', 'plafond', 'doublage', 'cloison', 'jointage', 'ossature'] },
-  { key: 'electricite', label: 'Électricité', color: '#fbbf24', match: ['électricité', 'electricite', 'électr'] },
-  { key: 'plomberie', label: 'Plomberie', color: '#2dd4bf', match: ['plomberie', 'plomb', 'alimentation eu', 'réseaux eu'] },
-  { key: 'climatisation', label: 'Climatisation', color: '#06b6d4', match: ['clim', 'climatisation'] },
+  { key: 'platrerie', label: 'Plâtrerie', color: '#60a5fa', match: ['platrer', 'platrerie', 'sad', 'plafond', 'doublage', 'cloison', 'jointage', 'ossature'] },
+  { key: 'electricite', label: 'Électricité', color: '#fbbf24', match: ['electr', 'électr', 'appareillage'] },
+  { key: 'plomberie', label: 'Plomberie / Climatisation', color: '#2dd4bf', match: ['plomberie', 'plomb', 'clim', 'eu', 'alimentation', 'appareillage plomb'] },
   { key: 'peinture', label: 'Peinture', color: '#f472b6', match: ['peinture'] },
-  { key: 'carrelage', label: 'Carrelage', color: '#f97316', match: ['carrelage'] },
-  { key: 'sols', label: 'Sols / Revêtement', color: '#84cc16', match: ['sol pvc', 'sol /', 'revêtement', 'ragréage', 'pose des sols'] },
-  { key: 'cuisine', label: 'Cuisine', color: '#c8a96e', match: ['cuisine'] },
+  { key: 'sols', label: 'Sols / Carrelage / Cuisine', color: '#4ade80', match: ['sol', 'sols', 'carrelage', 'cuisine', 'ragréage', 'pose des'] },
 ];
 
-let planView = 'chantier';
-
-function planGetLotKey(nom) {
-  const n = nom.toLowerCase();
-  for (const k of PLAN_LOTS_KEYS) {
-    if (k.match.some(m => n.includes(m))) return k;
+function getCorps(lotNom) {
+  const n = lotNom.toLowerCase();
+  for (const c of CORPS_KEYS) {
+    if (c.match.some(m => n.includes(m))) return c;
   }
   return { key: 'other', label: 'Autres', color: '#6b7280' };
 }
 
-function planDateToX(dateStr, minD, totalDays) {
-  return ((new Date(dateStr) - minD) / 86400000) / totalDays * 100;
-}
-function planDaysToW(d1, d2, totalDays) {
-  return ((new Date(d2) - new Date(d1)) / 86400000) / totalDays * 100;
-}
-function planFmt(d) {
-  return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'2-digit' });
-}
+function ganttBuildCorpsView(labelW) {
+  const todayX = dateToX(today.toISOString().slice(0,10));
+  const byCorps = {};
 
-function planRender() {
-  const allD = PLAN_CHANTIERS.flatMap(c => c.lots.flatMap(l => [new Date(l.debut), new Date(l.fin)]));
-  const minD = new Date(Math.min(...allD)); minD.setDate(1);
-  const maxD = new Date(Math.max(...allD)); maxD.setMonth(maxD.getMonth()+1, 1);
-  const totalDays = (maxD - minD) / 86400000;
-  const today = new Date();
-  const todayX = planDateToX(today.toISOString().slice(0,10), minD, totalDays);
-  const LW = 180; // label width px
+  GANTT_CHANTIERS.forEach(c => {
+    c.lots.filter(l => l.parent).forEach(lot => {
+      const corps = getCorps(lot.nom);
+      if (!byCorps[corps.key]) byCorps[corps.key] = { ...corps, items: [] };
+      byCorps[corps.key].items.push({ chantier: c.nom, couleur: c.couleur, lot });
+    });
+  });
 
-  // Mois header
-  let months = '';
-  let cur = new Date(minD);
-  while (cur < maxD) {
-    const end = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
-    const endC = end < maxD ? end : maxD;
-    const w = ((endC - cur) / 86400000) / totalDays * 100;
-    months += `<div style="width:${w}%;text-align:center;font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:1px;padding:6px 0;border-right:1px solid var(--border);flex-shrink:0">${cur.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'})}</div>`;
-    cur = end;
-  }
-  const header = `<div style="display:flex;margin-left:${LW}px;border-bottom:1px solid var(--border);background:var(--surface2);border-bottom:1px solid var(--border)">${months}</div>`;
-
-  // Ligne aujourd'hui (overlay)
-  const todayMarker = `<div style="position:absolute;left:calc(${LW}px + ${todayX}%);top:0;bottom:0;width:2px;background:#f87171;opacity:0.7;z-index:5;pointer-events:none">
-    <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);font-size:9px;color:#f87171;white-space:nowrap;background:var(--surface);padding:1px 4px;border-radius:3px">Aujourd'hui</div>
-  </div>`;
-
-  let body = '';
-
-  if (planView === 'chantier') {
-    body = PLAN_CHANTIERS.map(c => {
-      const rows = c.lots.map(lot => {
-        const x = planDateToX(lot.debut, minD, totalDays);
-        const w = planDaysToW(lot.debut, lot.fin, totalDays);
-        const pctTxt = lot.pct !== null ? ` — ${lot.pct}%` : '';
-        return `<div style="display:grid;grid-template-columns:${LW}px 1fr;align-items:center;border-bottom:1px solid var(--border);transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,0.03)'" onmouseleave="this.style.background=''">
-          <div style="font-size:11px;color:var(--muted);padding:6px 8px 6px 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${lot.nom}</div>
-          <div style="position:relative;height:28px">
-            <div title="${lot.nom}${pctTxt} | ${planFmt(lot.debut)} → ${planFmt(lot.fin)}"
-              style="position:absolute;left:${x}%;width:${Math.max(w,0.5)}%;height:14px;top:7px;border-radius:3px;background:${c.couleur};opacity:0.75;cursor:default"></div>
-          </div>
-        </div>`;
-      }).join('');
-
-      const cx = planDateToX(c.debut, minD, totalDays);
-      const cw = planDaysToW(c.debut, c.fin, totalDays);
+  return Object.values(byCorps).map(corps => {
+    const rows = corps.items.map(item => {
+      const x = dateToX(item.lot.debut);
+      const w = daysToW(item.lot.debut, item.lot.fin);
       return `
-        <div style="margin-bottom:4px">
-          <div style="display:grid;grid-template-columns:${LW}px 1fr;align-items:center;background:var(--surface2);border-radius:8px 8px 0 0;border:1px solid var(--border);border-bottom:none;padding:8px 0">
-            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--text);padding-left:12px;display:flex;align-items:center;gap:8px">
-              <span style="width:10px;height:10px;border-radius:2px;background:${c.couleur};display:inline-block;flex-shrink:0"></span>
-              <span>${c.nom}</span>
-            </div>
-            <div style="position:relative;height:28px">
-              <div style="position:absolute;left:${cx}%;width:${cw}%;height:22px;top:3px;border-radius:4px;background:${c.couleur};opacity:0.15"></div>
-            </div>
+        <div class="corps-bar-row" style="grid-template-columns:${labelW}px 1fr"
+             onmouseenter="showTip(event,'${item.lot.nom.replace(/'/g,"\\'")} — ${item.chantier.replace(/'/g,"\\'")}','${item.lot.debut}','${item.lot.fin}',${item.lot.pct})"
+             onmouseleave="hideTip()">
+          <div class="lot-name" style="font-size:12px;color:var(--muted);padding-left:12px">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${item.couleur};margin-right:6px"></span>
+            ${item.chantier}
           </div>
-          <div style="border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;overflow:hidden">${rows}</div>
+          <div class="bar-cell" style="position:relative">
+            <div class="bar" style="left:${x}%;width:${w}%;background:${corps.color}">
+              ${w > 4 ? item.lot.nom.split(' - ').pop().split(' ').slice(0,3).join(' ') : ''}
+            </div>
+            <div class="today-line" style="left:${todayX}%"></div>
+          </div>
         </div>`;
     }).join('');
 
-  } else {
-    // Vue par lot
-    const byLot = {};
-    PLAN_CHANTIERS.forEach(c => {
-      c.lots.forEach(lot => {
-        const k = planGetLotKey(lot.nom);
-        if (!byLot[k.key]) byLot[k.key] = { ...k, items: [] };
-        byLot[k.key].items.push({ chantier: c, lot });
-      });
-    });
-
-    body = Object.values(byLot).map(lot => {
-      const rows = lot.items.map(item => {
-        const x = planDateToX(item.lot.debut, minD, totalDays);
-        const w = planDaysToW(item.lot.debut, item.lot.fin, totalDays);
-        const pctTxt = item.lot.pct !== null ? ` — ${item.lot.pct}%` : '';
-        return `<div style="display:grid;grid-template-columns:${LW}px 1fr;align-items:center;border-bottom:1px solid var(--border)" onmouseenter="this.style.background='rgba(255,255,255,0.03)'" onmouseleave="this.style.background=''">
-          <div style="font-size:11px;color:var(--muted);padding:6px 8px 6px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px">
-            <span style="width:8px;height:8px;border-radius:50%;background:${item.chantier.couleur};flex-shrink:0"></span>
-            ${item.chantier.nom}
-          </div>
-          <div style="position:relative;height:28px">
-            <div title="${item.chantier.nom} — ${item.lot.nom}${pctTxt} | ${planFmt(item.lot.debut)} → ${planFmt(item.lot.fin)}"
-              style="position:absolute;left:${x}%;width:${Math.max(w,0.5)}%;height:16px;top:6px;border-radius:3px;background:${lot.color};cursor:default"></div>
-          </div>
-        </div>`;
-      }).join('');
-
-      return `<div style="margin-bottom:12px">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:${lot.color};padding:10px 0 6px;display:flex;align-items:center;gap:10px">
-          ${lot.label}
-          <span style="flex:1;height:1px;background:var(--border);display:inline-block"></span>
-        </div>
+    return `
+      <div class="corps-section">
+        <div class="corps-title" style="color:${corps.color}">${corps.label}</div>
         <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">${rows}</div>
       </div>`;
-    }).join('');
-  }
+  }).join('');
+}
 
-  // Légende
-  document.getElementById('plan-legend').innerHTML = PLAN_CHANTIERS.map(c =>
-    `<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
-      <span style="width:10px;height:10px;border-radius:2px;background:${c.couleur};display:inline-block"></span>${c.nom}
-    </div>`
+// ===================== RENDER =====================
+let currentView = 'chantier';
+const LABEL_W = 200;
+
+function ganttRender() {
+  const gantt = document.getElementById('gantt-inner');
+  const body = currentView === 'chantier'
+    ? ganttBuildChantierView(LABEL_W)
+    : ganttBuildCorpsView(LABEL_W);
+  gantt.innerHTML = ganttBuildMonthsHeader(LABEL_W) + body;
+  ganttUpdateStats();
+  ganttUpdateLegend();
+}
+
+function ganttSetView(v) {
+  currentView = v;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.textContent.includes(v === 'chantier' ? 'chantier' : 'corps')));
+  ganttRender();
+}
+
+function ganttToggleSection(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+function ganttUpdateStats() {
+  const today = new Date();
+  const actifs = GANTT_CHANTIERS.filter(c => new Date(c.debut) <= today && new Date(c.fin) >= today).length;
+  const totalLots = GANTT_CHANTIERS.reduce((s, c) => s + c.lots.filter(l => l.parent).length, 0);
+  document.getElementById('gantt-stats-bar').innerHTML = `
+    <div class="stat"><strong>${GANTT_CHANTIERS.length}</strong> chantiers</div>
+    <div class="stat"><strong>${actifs}</strong> en cours</div>
+    <div class="stat"><strong>${totalLots}</strong> lots au total</div>
+    <div class="stat">Du <strong>${fmtDate(minDate.toISOString().slice(0,10))}</strong> au <strong>${fmtDate(maxDate.toISOString().slice(0,10))}</strong></div>
+  `;
+}
+
+function ganttUpdateLegend() {
+  document.getElementById('gantt-legend').innerHTML = GANTT_CHANTIERS.map(c =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${c.couleur}"></div>${c.nom}</div>`
   ).join('');
-
-  document.getElementById('plan-gantt').innerHTML =
-    `<div style="position:relative">${header}<div style="position:relative">${todayMarker}${body}</div></div>`;
 }
 
-function planSetView(v) {
-  planView = v;
-  document.getElementById('plan-btn-chantier').style.background = v === 'chantier' ? 'var(--accent)' : 'transparent';
-  document.getElementById('plan-btn-chantier').style.color = v === 'chantier' ? '#1a1200' : 'var(--muted)';
-  document.getElementById('plan-btn-lot').style.background = v === 'lot' ? 'var(--accent)' : 'transparent';
-  document.getElementById('plan-btn-lot').style.color = v === 'lot' ? '#1a1200' : 'var(--muted)';
-  planRender();
+// ===================== TOOLTIP =====================
+function showTip(e, nom, debut, fin, pct) {
+  const t = document.getElementById('gantt-tooltip');
+  t.innerHTML = `<div class="tooltip-title">${nom}</div>
+    <div class="tooltip-dates">📅 ${fmtDate(debut)} → ${fmtDate(fin)}</div>
+    ${pct !== null ? `<div class="tooltip-pct">⏱ Avancement : ${pct}%</div>` : ''}`;
+  t.classList.add('visible');
+  moveTip(e);
 }
+function moveTip(e) {
+  const t = document.getElementById('gantt-tooltip');
+  t.style.left = (e.clientX + 12) + 'px';
+  t.style.top = (e.clientY - 10) + 'px';
+}
+function hideTip() {
+  document.getElementById('gantt-tooltip').classList.remove('visible');
+}
+document.addEventListener('mousemove', moveTip);
+
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' });
+}
+
 
 </script>
 </body>

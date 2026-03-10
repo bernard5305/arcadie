@@ -699,7 +699,7 @@
     <div class="modal-body" id="modal-proj-body"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-project')">Fermer</button>
-      <button class="btn btn-primary" id="modal-proj-save" onclick="saveProject()">Enregistrer</button>
+      <button class="btn btn-primary" id="modal-proj-save">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -1038,6 +1038,7 @@ function openProjectModal(id) {
       <button class="btn btn-ghost btn-sm" onclick="addArtisanRow('${id.replace(/'/g,"\\'")}')">+ Ajouter un artisan</button>
     </div>
   `;
+  document.getElementById('modal-proj-save').onclick = () => saveProject();
   document.getElementById('modal-project').classList.add('open');
 }
 
@@ -1347,13 +1348,13 @@ function openAdmDetail(dossier) {
   const body = document.getElementById('modal-proj-body');
   body.innerHTML = `
     <div class="form-grid" style="margin-bottom:20px">
-      <div class="form-group"><label>Mail</label><input id="adm-mail" value="${a['Mail '] || ''}"></div>
+      <div class="form-group"><label>Mail</label><input id="adm-mail" value="${a['Mail'] || ''}"></div>
       <div class="form-group"><label>Téléphone</label><input id="adm-tel" value="${a['Tél'] || ''}"></div>
       <div class="form-group full"><label>Commentaires</label><textarea id="adm-comment">${a['COMMENTAIRES'] || ''}</textarea></div>
     </div>
     <div class="section-sep">État des démarches</div>
     <div class="adm-grid">
-      ${keys.filter(k => !['Aides','Adresse Chantier','Adresse Client','Mail ','Tél','COMMENTAIRES','N°DP','N°PC'].includes(k)).map(k => `
+      ${keys.filter(k => !['Aides','Adresse Chantier','Adresse Client','Mail','Tél','COMMENTAIRES','N°DP','N°PC'].includes(k)).map(k => `
         <div class="adm-item">
           <div class="adm-item-label">${k}</div>
           <select id="adm-${k.replace(/[^a-zA-Z]/g,'_')}" style="width:100%;padding:4px 8px;font-size:12px">
@@ -1367,10 +1368,10 @@ function openAdmDetail(dossier) {
 function saveAdm(dossier) {
   const a = allAdm.find(x => x.dossier === dossier);
   if (!a) return;
-  a['Mail '] = document.getElementById('adm-mail')?.value || a['Mail '];
+  a['Mail'] = document.getElementById('adm-mail')?.value || a['Mail'];
   a['Tél'] = document.getElementById('adm-tel')?.value || a['Tél'];
   a['COMMENTAIRES'] = document.getElementById('adm-comment')?.value || '';
-  const keys = Object.keys(a).filter(k => !['dossier','Aides','Adresse Chantier','Adresse Client','Mail ','Tél','COMMENTAIRES','N°DP','N°PC'].includes(k));
+  const keys = Object.keys(a).filter(k => !['dossier','Aides','Adresse Chantier','Adresse Client','Mail','Tél','COMMENTAIRES','N°DP','N°PC'].includes(k));
   keys.forEach(k => {
     const el = document.getElementById('adm-' + k.replace(/[^a-zA-Z]/g,'_'));
     if (el) a[k] = el.value || null;

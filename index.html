@@ -778,11 +778,15 @@ function apiGet(action) {
 }
 
 function apiPost(data) {
-  // Google Apps Script requiert un GET avec paramètres pour éviter les erreurs CORS preflight
-  const params = new URLSearchParams({ payload: JSON.stringify(data) });
-  return fetch(API_URL + '?' + params.toString(), { method: 'GET' })
-    .then(r => r.json())
-    .catch(err => { console.error('API POST error:', err); return {error: err.toString()}; });
+  // Content-Type text/plain évite le preflight CORS tout en permettant un vrai POST
+  // Google Apps Script lit les données via e.postData.contents
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(data)
+  })
+  .then(r => r.json())
+  .catch(err => { console.error('API POST error:', err); return {error: err.toString()}; });
 }
 
 // Charger toutes les données depuis Google Sheets

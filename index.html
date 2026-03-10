@@ -388,12 +388,7 @@
       </div>
     </div>
     <div id="fin-liste">
-      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
-        <div class="kpi gold"><div class="kpi-label">Volume TTC total</div><div class="kpi-value" id="fin-total">—</div></div>
-        <div class="kpi purple"><div class="kpi-label">Acomptes facturés</div><div class="kpi-value" id="fin-acompte">—</div></div>
-        <div class="kpi green"><div class="kpi-label">MDT reçus</div><div class="kpi-value" id="fin-mdt">—</div></div>
-        <div class="kpi blue"><div class="kpi-label">Reste à facturer</div><div class="kpi-value" id="fin-reste">—</div></div>
-      </div>
+      
       <div class="filter-tabs" id="fin-filters">
         <button class="filter-tab active" onclick="filterFinancier('tous',this)">Tous</button>
         <button class="filter-tab" onclick="filterFinancier('reste',this)">Reste &gt; 0</button>
@@ -408,6 +403,12 @@
         <div style="overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 260px)"><table><thead><tr>
           <th>Client</th><th>Devis HT</th><th>Devis TTC</th><th>Acomptes</th><th>Fact. inter.</th><th>Factures fin.</th><th>MDT reçus</th><th>Reste</th><th>%</th>
         </tr></thead><tbody id="fin-table"></tbody></table></div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-top:20px;margin-bottom:0">
+        <div class="kpi gold"><div class="kpi-label">Volume TTC total</div><div class="kpi-value" id="fin-total">—</div></div>
+        <div class="kpi purple"><div class="kpi-label">Acomptes facturés</div><div class="kpi-value" id="fin-acompte">—</div></div>
+        <div class="kpi green"><div class="kpi-label">MDT reçus</div><div class="kpi-value" id="fin-mdt">—</div></div>
+        <div class="kpi blue"><div class="kpi-label">Reste à facturer</div><div class="kpi-value" id="fin-reste">—</div></div>
+      </div>
       </div>
     </div>
     <div id="fin-detail" style="display:none">

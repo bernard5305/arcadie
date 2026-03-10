@@ -61,7 +61,7 @@
   .page-subtitle { color:var(--muted); font-size:13px; margin-top:4px; }
 
   /* KPI CARDS */
-  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+  .kpi-grid { display:grid; grid-template-columns:1fr; gap:16px; margin-bottom:28px; }
   .kpi {
     background:var(--surface); border:1px solid var(--border);
     border-radius:var(--radius); padding:20px 22px; position:relative; overflow:hidden;
@@ -247,10 +247,10 @@
   .tbl-wrap thead th { position:sticky !important;top:0 !important;z-index:5;background:var(--surface2) !important;box-shadow:0 1px 0 var(--border); }
   #fin-detail-body + * th, #fin-detail-body ~ tfoot { position:sticky; }
 
-  /* KPIs financier liste - compacts */
   #fin-liste .kpi { padding:14px 12px; }
   #fin-liste .kpi-label { font-size:10px; }
   #fin-liste .kpi-value { font-size:20px; }
+  #fin-liste .kpi-grid { grid-template-columns:repeat(4,1fr) !important; }
 
 </style>
 </head>
@@ -300,21 +300,7 @@
     </div>
 
     <div class="kpi-grid">
-      <div class="kpi purple">
-        <div class="kpi-label">Volume total devis TTC</div>
-        <div class="kpi-value" id="kpi-devis">—</div>
-        <div class="kpi-sub">tous chantiers confondus</div>
-      </div>
-      <div class="kpi green">
-        <div class="kpi-label">MDT perçus</div>
-        <div class="kpi-value" id="kpi-mdt">—</div>
-        <div class="kpi-sub">honoraires encaissés</div>
-      </div>
-      <div class="kpi blue">
-        <div class="kpi-label">Reste à facturer</div>
-        <div class="kpi-value" id="kpi-reste">—</div>
-        <div class="kpi-sub">soldes en attente</div>
-      </div>
+<span id="kpi-devis" style="display:none"></span><span id="kpi-mdt" style="display:none"></span><span id="kpi-reste" style="display:none"></span>
       <div class="kpi gold">
         <div class="kpi-label">Chantiers actifs</div>
         <div class="kpi-value" id="kpi-nb">33</div>
@@ -322,27 +308,25 @@
       </div>
 
 
-    <div class="two-cols">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Derniers chantiers</div>
-          <button class="btn btn-ghost btn-sm" onclick="showPage('projets')">Voir tout</button>
-        </div>
-        <table>
-          <thead><tr>
-            <th>Client</th><th>Projet</th><th>Devis TTC</th><th>Reste</th>
-          </tr></thead>
-          <tbody id="dash-recent-projects"></tbody>
-        </table>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Derniers chantiers</div>
+        <button class="btn btn-ghost btn-sm" onclick="showPage('projets')">Voir tout</button>
       </div>
+      <table>
+        <thead><tr>
+          <th>Client</th><th>Projet</th><th>Devis TTC</th><th>Reste</th>
+        </tr></thead>
+        <tbody id="dash-recent-projects"></tbody>
+      </table>
+    </div>
 
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Alertes administratives</div>
-          <span class="badge badge-orange" id="alert-count">—</span>
-        </div>
-        <div style="padding:12px 0" id="dash-alerts"></div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Alertes administratives</div>
+        <span class="badge badge-orange" id="alert-count">—</span>
       </div>
+      <div style="padding:12px 0" id="dash-alerts"></div>
     </div>
 
     <div class="card">
@@ -782,6 +766,11 @@ function initDashboard() {
         </div>
       </div>`;
   }).join('');
+
+  // Rendre les autres pages
+  renderProjects();
+  renderAdm();
+  finShowList();
 }
 
 // ==================== PROJETS ====================

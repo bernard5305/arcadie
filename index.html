@@ -61,7 +61,7 @@
   .page-subtitle { color:var(--muted); font-size:13px; margin-top:4px; }
 
   /* KPI CARDS */
-  .kpi-grid { display:grid; grid-template-columns:1fr; gap:16px; margin-bottom:28px; max-width:300px; }
+  .kpi-grid { display:grid; grid-template-columns:1fr; gap:16px; margin-bottom:28px; }
   .kpi {
     background:var(--surface); border:1px solid var(--border);
     border-radius:var(--radius); padding:20px 22px; position:relative; overflow:hidden;
@@ -240,7 +240,7 @@
   .filter-tab.active { background:var(--accent); color:#1a1200; border-color:var(--accent); font-weight:600; }
   .filter-tab:hover:not(.active) { border-color:var(--muted); color:var(--text); }
 
-  @media(max-width:1100px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } }
+  
 
   table thead th {
     position: sticky;

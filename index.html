@@ -542,9 +542,13 @@
         <div class="page-title" id="fin-title">Suivi financier</div>
         <div class="page-subtitle" id="fin-subtitle">Cliquez sur un projet pour le détail complet</div>
       </div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;align-items:center">
         <button class="btn btn-ghost" id="btn-fin-back" onclick="finShowList()" style="display:none">← Retour</button>
         <button class="btn btn-primary" id="btn-fin-add" onclick="finAddLigne()" style="display:none">+ Ligne</button>
+        <button class="btn btn-ghost" id="btn-fin-save" onclick="finSaveToSheets()" style="display:none;border-color:var(--green);color:var(--green);position:relative">
+          💾 Enregistrer dans Sheets
+          <span id="fin-unsaved-dot" style="display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--orange);border:2px solid var(--bg)"></span>
+        </button>
       </div>
     </div>
     <div id="fin-liste">
@@ -1087,6 +1091,38 @@ function addNewProject() {
 
 // ==================== FINANCIER ====================
 let finCurrentProjet = null;
+let finDirty = false; // modifications non sauvegardées
+
+function finSetDirty(isDirty) {
+  finDirty = isDirty;
+  const dot = document.getElementById('fin-unsaved-dot');
+  const btn = document.getElementById('btn-fin-save');
+  if (!dot || !btn) return;
+  if (isDirty) {
+    dot.style.display = 'block';
+    btn.style.borderColor = 'var(--orange)';
+    btn.style.color = 'var(--orange)';
+    btn.title = 'Modifications non sauvegardées';
+  } else {
+    dot.style.display = 'none';
+    btn.style.borderColor = 'var(--green)';
+    btn.style.color = 'var(--green)';
+    btn.title = '';
+  }
+}
+
+function finSaveToSheets() {
+  if (!finCurrentProjet) return;
+  showSaving('💾 Enregistrement dans Google Sheets...');
+  apiPost({ action: 'save_projet', projet: finCurrentProjet }).then(r => {
+    if (r && r.success) {
+      showToast('✓ Sauvegardé dans Google Sheets');
+      finSetDirty(false);
+    } else {
+      showToast('⚠ Erreur: ' + ((r && r.error) || 'Vérifiez la connexion'));
+    }
+  }).catch(() => showToast('⚠ Impossible de contacter Google Sheets'));
+}
 
 function finInitKpis() {
   const total = PROJECTS_FULL.reduce((s,p)=>s+(p.total_devis_ttc||0),0);
@@ -1100,11 +1136,17 @@ function finInitKpis() {
 }
 
 function finShowList() {
+  if (finDirty) {
+    const ok = confirm('⚠ Vous avez des modifications non sauvegardées.\nQuitter sans enregistrer ?');
+    if (!ok) return;
+  }
   finCurrentProjet = null;
+  finSetDirty(false);
   document.getElementById('fin-liste').style.display = '';
   document.getElementById('fin-detail').style.display = 'none';
   document.getElementById('btn-fin-back').style.display = 'none';
   document.getElementById('btn-fin-add').style.display = 'none';
+  document.getElementById('btn-fin-save').style.display = 'none';
   document.getElementById('fin-title').textContent = 'Suivi financier';
   document.getElementById('fin-subtitle').textContent = 'Cliquez sur un projet pour le détail complet';
   renderFinancier();
@@ -1139,10 +1181,12 @@ function finOpenDetail(id) {
   const p = PROJECTS_FULL.find(x => x.id === id);
   if (!p) return;
   finCurrentProjet = p;
+  finSetDirty(false);
   document.getElementById('fin-liste').style.display = 'none';
   document.getElementById('fin-detail').style.display = '';
   document.getElementById('btn-fin-back').style.display = '';
   document.getElementById('btn-fin-add').style.display = '';
+  document.getElementById('btn-fin-save').style.display = '';
   document.getElementById('fin-title').textContent = p.client;
   document.getElementById('fin-subtitle').textContent = p.adresse||p.projet||'';
   const kpis=[{l:'Devis HT',v:fmt(p.total_devis_ht||0),c:'var(--text)'},{l:'Devis TTC',v:fmt(p.total_devis_ttc||0),c:'var(--accent)'},{l:'Acomptes',v:fmt(p.total_fac_acompte||0),c:'var(--blue)'},{l:'Fact. inter.',v:fmt(p.total_fac_inter||0),c:'var(--accent2)'},{l:'MDT reçus',v:fmt(p.total_mdt||0),c:'var(--green)'},{l:'Reste',v:fmt(p.total_reste||0),c:(p.total_reste||0)>0?'var(--orange)':'var(--green)'}];
@@ -1195,6 +1239,9 @@ function finRenderDetail() {
     <td style="padding:8px 12px">${fmt(sum('fac_mdt'))}</td><td></td>
     <td style="padding:8px 12px;color:var(--green)">${fmt(sum('paiement_mdt'))}</td><td></td>
   </tr>`;
+  // Mettre à jour les KPIs en temps réel
+  const kpis=[{l:'Devis HT',v:fmt(p.total_devis_ht||0),c:'var(--text)'},{l:'Devis TTC',v:fmt(p.total_devis_ttc||0),c:'var(--accent)'},{l:'Acomptes',v:fmt(p.total_fac_acompte||0),c:'var(--blue)'},{l:'Fact. inter.',v:fmt(p.total_fac_inter||0),c:'var(--accent2)'},{l:'MDT reçus',v:fmt(p.total_mdt||0),c:'var(--green)'},{l:'Reste',v:fmt(p.total_reste||0),c:(p.total_reste||0)>0?'var(--orange)':'var(--green)'}];
+  document.getElementById('fin-kpis').innerHTML = kpis.map(k=>`<div style="text-align:center"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">${k.l}</div><div style="font-size:17px;font-weight:700;font-family:'Syne',sans-serif;color:${k.c}">${k.v}</div></div>`).join('');
 }
 
 function finEdit(td, idx, field) {
@@ -1213,7 +1260,9 @@ function finEdit(td, idx, field) {
     if(numF.includes(field)) v=v===''?null:parseFloat(v.replace(',','.'))||0;
     ligne[field]=v;
     if(field==='devis_ht'||field==='tva'){const ht=parseFloat(ligne.devis_ht)||0,tva=parseFloat(ligne.tva)||0;if(ht>0)ligne.devis_ttc=tva>1?Math.round(ht*(1+tva/100)*100)/100:Math.round(ht*1.2*100)/100;}
-    finRecalc(p); finRenderDetail(); saveProjetToSheets(p);
+    finRecalc(p);
+    finSetDirty(true); // marquer non sauvegardé — sans appel API automatique
+    finRenderDetail();
   };
   inp.addEventListener('blur',save);
   inp.addEventListener('keydown',e=>{if(e.key==='Enter')save();if(e.key==='Escape')finRenderDetail();});
@@ -1235,7 +1284,8 @@ function finAddLigne() {
   const corps=prompt('Corps de métier :'); if(corps===null) return;
   const artisan=prompt('Artisan / Entreprise :')||'';
   finCurrentProjet.lignes.push({corps,artisan,n_devis:null,devis_ht:null,tva:null,devis_ttc:null,devis_envoye:null,devis_valide:null,devis_valide_artisan:null,decennales:null,fac_acompte:null,fac_acompte_client:null,cheque_acompte:null,fac_inter:null,fi_client:null,cheque_inter:null,factures:null,fa_client:null,cheque_artisan:null,reste:null,fac_mdt:null,fa_mdt_artisan:null,paiement_mdt:null});
-  finRenderDetail(); saveProjetToSheets(finCurrentProjet);
+  finSetDirty(true);
+  finRenderDetail();
 }
 
 function finDelLigne(idx) {
@@ -1244,7 +1294,9 @@ function finDelLigne(idx) {
   const lignes=(p.lignes||[]).filter(l=>l.corps||l.artisan);
   const gi=p.lignes.indexOf(lignes[idx]);
   p.lignes.splice(gi,1);
-  finRecalc(p); finRenderDetail(); saveProjetToSheets(p);
+  finRecalc(p);
+  finSetDirty(true);
+  finRenderDetail();
 }
 
 function filterFinancier(f, btn) {

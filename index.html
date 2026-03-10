@@ -778,7 +778,6 @@ function apiGet(action) {
 }
 
 function apiPost(data) {
-  // Content-Type text/plain évite le preflight CORS — Google Apps Script lit via e.postData.contents
   return fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
@@ -1341,53 +1340,46 @@ function renderAdm() {
 function openAdmDetail(dossier) {
   const a = allAdm.find(x => x.dossier === dossier);
   if (!a) return;
-
   document.getElementById('modal-proj-title').textContent = a.dossier;
   document.getElementById('modal-proj-sub').textContent = a['Adresse Chantier'] || '';
   document.getElementById('modal-proj-save').onclick = () => saveAdm(dossier);
 
-  // Champs texte libre (pas de menu déroulant)
-  const CHAMPS_TEXTE = ['dossier','Dossier client','MAITRISE D'ŒUVRE','Adresse Chantier','Adresse Client','Mail','Tél','COMMENTAIRES','N°DP','N°PC','Aides'];
-  // Champs à exclure du formulaire (gérés séparément ou non pertinents)
-  const CHAMPS_EXCLUS = ['Adresse Chantier','Adresse Client','Aides'];
-  // Options du menu déroulant pour les champs statut
+  // Clé avec apostrophe — utiliser double-quotes pour éviter la coupure de string JS
+  const KEY_MOE = "MAITRISE D'ŒUVRE";
+  const CHAMPS_TEXTE = ['dossier', KEY_MOE, 'Dossier client', 'Adresse Chantier', 'Adresse Client', 'Mail', 'Tél', 'COMMENTAIRES', 'N°DP', 'N°PC', 'Aides'];
+  const CHAMPS_EXCLUS = ['Adresse Chantier', 'Adresse Client', 'Aides'];
   const STATUS_OPTIONS = ['','a faire','en cours','signé','ok','payé','envoyé','déposé','validé','non compris'];
 
-  function fieldId(k) { return 'adm-' + k.replace(/[^a-zA-Z0-9]/g,'_'); }
+  function fid(k) { return 'adm_' + k.replace(/[^a-zA-Z0-9]/g, '_'); }
 
   function renderField(k, val) {
-    const id = fieldId(k);
-    const isTexte = CHAMPS_TEXTE.includes(k);
-    if (isTexte) {
-      return `<div class="form-group">
-        <label>${k}</label>
-        <input id="${id}" value="${(val||'').toString().replace(/"/g,'&quot;')}">
-      </div>`;
-    } else {
-      const opts = STATUS_OPTIONS.map(v =>
-        `<option ${val === v ? 'selected' : ''} value="${v}">${v || '—'}</option>`
-      ).join('');
-      return `<div class="adm-item">
-        <div class="adm-item-label">${k}</div>
-        <select id="${id}" style="width:100%;padding:4px 8px;font-size:12px">${opts}</select>
-      </div>`;
+    const id = fid(k);
+    const safe = (val || '').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    if (CHAMPS_TEXTE.includes(k)) {
+      if (k === 'COMMENTAIRES') {
+        return '<div class="form-group full"><label>' + k + '</label><textarea id="' + id + '">' + safe + '</textarea></div>';
+      }
+      return '<div class="form-group"><label>' + k + '</label><input id="' + id + '" value="' + safe + '"></div>';
     }
+    const opts = STATUS_OPTIONS.map(function(v) {
+      return '<option' + (val === v ? ' selected' : '') + ' value="' + v + '">' + (v || '—') + '</option>';
+    }).join('');
+    return '<div class="adm-item"><div class="adm-item-label">' + k + '</div><select id="' + id + '" style="width:100%;padding:4px 8px;font-size:12px">' + opts + '</select></div>';
   }
 
-  // Séparer les clés en deux groupes
-  const allKeys = Object.keys(a).filter(k => k !== 'dossier' && !CHAMPS_EXCLUS.includes(k));
-  const champsTexte = allKeys.filter(k => CHAMPS_TEXTE.includes(k) && k !== 'Adresse Chantier');
-  const champsStatut = allKeys.filter(k => !CHAMPS_TEXTE.includes(k));
+  const allKeys = Object.keys(a).filter(function(k) { return k !== 'dossier' && !CHAMPS_EXCLUS.includes(k); });
+  const champsTexte = allKeys.filter(function(k) { return CHAMPS_TEXTE.includes(k); });
+  const champsStatut = allKeys.filter(function(k) { return !CHAMPS_TEXTE.includes(k); });
 
   const body = document.getElementById('modal-proj-body');
-  body.innerHTML = `
-    <div class="form-grid" style="margin-bottom:20px">
-      ${champsTexte.map(k => renderField(k, a[k])).join('')}
-    </div>
-    <div class="section-sep">État des démarches</div>
-    <div class="adm-grid">
-      ${champsStatut.map(k => renderField(k, a[k])).join('')}
-    </div>`;
+  body.innerHTML =
+    '<div class="form-grid" style="margin-bottom:20px">' +
+    champsTexte.map(function(k) { return renderField(k, a[k]); }).join('') +
+    '</div>' +
+    '<div class="section-sep">État des démarches</div>' +
+    '<div class="adm-grid">' +
+    champsStatut.map(function(k) { return renderField(k, a[k]); }).join('') +
+    '</div>';
 
   document.getElementById('modal-project').classList.add('open');
 }
@@ -1395,11 +1387,9 @@ function openAdmDetail(dossier) {
 function saveAdm(dossier) {
   const a = allAdm.find(x => x.dossier === dossier);
   if (!a) return;
-  // Récupérer tous les champs du formulaire dynamiquement
-  const CHAMPS_EXCLUS = ['dossier','Adresse Chantier','Adresse Client','Aides'];
-  Object.keys(a).filter(k => !CHAMPS_EXCLUS.includes(k)).forEach(k => {
-    const id = 'adm-' + k.replace(/[^a-zA-Z0-9]/g,'_');
-    const el = document.getElementById(id);
+  const CHAMPS_EXCLUS = ['dossier', 'Adresse Chantier', 'Adresse Client', 'Aides'];
+  Object.keys(a).filter(function(k) { return !CHAMPS_EXCLUS.includes(k); }).forEach(function(k) {
+    const el = document.getElementById('adm_' + k.replace(/[^a-zA-Z0-9]/g, '_'));
     if (el) a[k] = el.value || null;
   });
   closeModal('modal-project');

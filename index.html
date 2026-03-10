@@ -292,7 +292,6 @@
   .gantt-wrap { overflow-x: auto; padding: 24px 32px; }
   .gantt { min-width: 900px; }
 
-  .gantt-
   .gantt-header-label {
     font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
     color: var(--muted); padding: 8px 0 8px 8px;
@@ -316,7 +315,15 @@
 
   /* Chantier section */
   .chantier-section { margin-bottom: 8px; }
-  .chantier-
+  .chantier-header {
+    display: grid; align-items: center;
+    background: var(--surface2);
+    border-radius: 8px 8px 0 0;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    padding: 10px 0;
+    cursor: pointer;
+  }
   .chantier-name {
     font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
     color: var(--text); padding-left: 12px;
@@ -639,7 +646,41 @@
     <div class="contact-grid" id="contacts-grid"></div>
   </div>
 
+  <!-- =================== PLANNING =================== -->
+  <div class="page" id="page-planning" style="padding:0">
+    <div style="padding:24px 32px 0">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+        <div>
+          <div class="page-title">Planning multi-chantiers</div>
+          <div class="page-subtitle">Suivi Gantt — avancement par lot et par corps de métier</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="view-toggle">
+            <button class="view-btn active" onclick="ganttSetView('chantier')">Par chantier</button>
+            <button class="view-btn" onclick="ganttSetView('corps')">Par corps de métier</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="stats-bar" id="gantt-stats-bar"></div>
+
+    <!-- Légende -->
+    <div class="controls" style="padding:12px 32px">
+      <div class="legend" id="gantt-legend"></div>
+    </div>
+
+    <!-- Gantt -->
+    <div class="gantt-wrap" style="padding:20px 32px">
+      <div class="gantt" id="gantt-inner"></div>
+    </div>
+  </div>
+
 </main>
+
+<!-- GANTT TOOLTIP -->
+<div class="tooltip" id="gantt-tooltip"></div>
 
 <!-- MODAL PROJET DETAIL -->
 <div class="modal-overlay" id="modal-project">
@@ -709,31 +750,6 @@
 </div>
 
 <div class="toast" id="toast"></div>
-
-<div class="page" id="page-planning">
-  <div class="page-header">
-    <div class="page-title">Planning multi-chantiers</div>
-    <div class="page-subtitle">Vue Gantt — tous les chantiers</div>
-  </div>
-
-  <div id="gantt-stats-bar" style="display:flex;gap:24px;padding:12px 0 16px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:16px"></div>
-
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
-    <div class="view-toggle" style="display:flex;gap:4px;background:var(--surface2);border-radius:8px;padding:4px">
-      <button class="view-btn active" onclick="ganttSetView('chantier')">Par chantier</button>
-      <button class="view-btn" onclick="ganttSetView('corps')">Par lot</button>
-    </div>
-    <div id="gantt-legend" style="display:flex;gap:16px;flex-wrap:wrap"></div>
-  </div>
-
-  <div class="card" style="padding:0">
-    <div id="gantt-inner" style="overflow-x:auto;min-width:0"></div>
-  </div>
-
-  <div class="tooltip" id="gantt-tooltip"></div>
-</div>
-</div>
-
 
 
 <script>

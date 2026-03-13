@@ -447,9 +447,6 @@
       <span class="icon">📅</span> Planning
     </button>
   <div style="padding:16px 12px;border-top:1px solid var(--border)">
-    <button class="nav-item" onclick="toggleDemo()" id="btn-demo" style="color:var(--orange,#c8a96e);width:100%;margin-top:8px">
-      <span class="icon">🎭</span> Mode démo
-    </button>
     <button class="nav-item" onclick="loadFromSheets()" style="color:var(--accent);width:100%">
       <span class="icon">↻</span> Sync Sheets
     </button>
@@ -791,32 +788,6 @@ function apiPost(data) {
 }
 
 // Charger toutes les données depuis Google Sheets
-function toggleDemo() {
-  DEMO_MODE = !DEMO_MODE;
-  const btn = document.getElementById('btn-demo');
-  if (DEMO_MODE) {
-    btn.innerHTML = '<span class="icon">🔴</span> Démo ON';
-    btn.style.color = '#e05252';
-  } else {
-    btn.innerHTML = '<span class="icon">🎭</span> Mode démo';
-    btn.style.color = 'var(--orange,#c8a96e)';
-  }
-  // Re-render toutes les vues financières
-  initDashboard();
-  const activePage = document.querySelector('.page.active');
-  if (activePage) {
-    const id = activePage.id.replace('page-','');
-    if (id === 'projets') renderProjects();
-    if (id === 'financier') { finInitKpis(); finShowList(); }
-  }
-  // Fermer et rouvrir le modal projet si ouvert
-  const modal = document.getElementById('project-modal');
-  if (modal && modal.style.display !== 'none' && modal.style.display !== '') {
-    const activeProject = modal.dataset.projectId;
-    if (activeProject) openProjectModal(activeProject);
-  }
-}
-
 function loadFromSheets() {
   showSaving('⏳ Chargement depuis Google Sheets...');
   apiGet('all').then(data => {
@@ -891,17 +862,8 @@ let admSearch = '';
 let currentEditId = null;
 
 // ==================== UTILS ====================
-let DEMO_MODE = false;
-const DEMO_COEFF = 0.73 + Math.random() * 0.54;
-const fmt = n => {
-  if (!n) return '—';
-  const val = DEMO_MODE ? Math.round(n * DEMO_COEFF / 1000) * 1000 : n;
-  return new Intl.NumberFormat('fr-FR', {style:'currency',currency:'EUR',maximumFractionDigits:0}).format(val);
-};
-const fmtK = n => {
-  const val = DEMO_MODE ? Math.round(n * DEMO_COEFF / 1000) * 1000 : n;
-  return val >= 1000 ? (val/1000).toFixed(0)+'k€' : val.toFixed(0)+'€';
-};
+const fmt = n => n ? new Intl.NumberFormat('fr-FR', {style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n) : '—';
+const fmtK = n => n >= 1000 ? (n/1000).toFixed(0)+'k€' : n.toFixed(0)+'€';
 
 function statusBadge(v) {
   if (!v) return '<span class="badge badge-muted">—</span>';
@@ -1033,7 +995,6 @@ function openProjectModal(id) {
   currentEditId = id;
   const p = allProjects.find(x => x.id === id);
   if (!p) return;
-  document.getElementById('project-modal').dataset.projectId = id;
   document.getElementById('modal-proj-title').textContent = p.client;
   document.getElementById('modal-proj-sub').textContent = (p.projet || '') + (p.adresse ? ' · ' + p.adresse : '');
 

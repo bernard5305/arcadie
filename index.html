@@ -790,7 +790,7 @@ function apiPost(data) {
 // Charger toutes les données depuis Google Sheets
 function loadFromSheets() {
   showSaving('⏳ Chargement depuis Google Sheets...');
-  apiGet('all').then(data => {
+  Promise.all([apiGet('all'), apiGet('plannings')]).then(([data, planData]) => {
     if (data.error) {
       showToast('⚠ Erreur chargement: ' + data.error);
       return;
@@ -809,6 +809,12 @@ function loadFromSheets() {
     if (data.contacts && data.contacts.length > 0) {
       allContacts.length = 0;
       data.contacts.forEach(c => allContacts.push(c));
+    }
+    // Mettre à jour GANTT_CHANTIERS depuis l'onglet Plannings
+    if (planData && planData.chantiers && planData.chantiers.length > 0) {
+      GANTT_CHANTIERS.length = 0;
+      planData.chantiers.forEach(c => GANTT_CHANTIERS.push(c));
+      recalcGanttDates();
     }
     initDashboard();
     showToast('✓ Données synchronisées');
@@ -1468,107 +1474,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ===================== DONNÉES =====================
-const GANTT_CHANTIERS = [
-  {
-    id: 'sci_cds',
-    nom: 'SCI CDS',
-    debut: '2025-11-17',
-    fin: '2026-07-11',
-    couleur: '#60a5fa',
-    lots: [
-      { nom: '1 - Gros Œuvre', debut: '2025-11-24', fin: '2025-11-30', pct: 93, parent: true },
-      { nom: 'Ouvertures', debut: '2025-11-17', fin: '2025-11-23', pct: 0, parent: false },
-      { nom: '2 - Charpente', debut: '2025-12-01', fin: '2025-12-21', pct: 100, parent: true },
-      { nom: 'PLANCHER', debut: '2025-11-24', fin: '2025-12-07', pct: 0, parent: false },
-      { nom: '3 - Menuiserie', debut: '2026-01-05', fin: '2026-01-09', pct: 56, parent: true },
-      { nom: '4 - Plâtrerie', debut: '2026-03-09', fin: '2026-05-10', pct: 0, parent: true },
-      { nom: 'Mise en œuvre SAD', debut: '2026-03-09', fin: '2026-03-29', pct: 0, parent: false },
-      { nom: 'Ossature plafonds', debut: '2026-03-23', fin: '2026-04-12', pct: 0, parent: false },
-      { nom: 'Doublage et cloison', debut: '2026-03-23', fin: '2026-04-12', pct: 0, parent: false },
-      { nom: 'Jointage', debut: '2026-04-13', fin: '2026-04-26', pct: 0, parent: false },
-      { nom: '5 - Électricité', debut: '2026-03-12', fin: '2026-05-10', pct: 0, parent: true },
-      { nom: 'Alimentations élec', debut: '2026-03-12', fin: '2026-03-26', pct: 0, parent: false },
-      { nom: 'Appareillage élec', debut: '2026-04-27', fin: '2026-05-10', pct: 0, parent: false },
-      { nom: '6 - Plomberie', debut: '2026-03-12', fin: '2026-05-10', pct: 0, parent: true },
-      { nom: 'Alimentation EU', debut: '2026-03-12', fin: '2026-03-25', pct: 0, parent: false },
-      { nom: 'Appareillage plomb', debut: '2026-04-27', fin: '2026-05-10', pct: 0, parent: false },
-      { nom: '7 - Climatisation', debut: '2026-03-12', fin: '2026-05-10', pct: 0, parent: true },
-      { nom: 'Alimentation clim', debut: '2026-03-12', fin: '2026-03-25', pct: 0, parent: false },
-      { nom: 'Pose groupe', debut: '2026-04-26', fin: '2026-05-09', pct: 0, parent: false },
-      { nom: '8 - Peinture', debut: '2026-05-11', fin: '2026-06-07', pct: 0, parent: true },
-      { nom: '9 - Revêtement sol PVC', debut: '2026-06-08', fin: '2026-06-28', pct: 0, parent: true },
-      { nom: '10 - Carrelage', debut: '2026-05-18', fin: '2026-06-07', pct: 0, parent: true },
-      { nom: '11 - Cuisine', debut: '2026-06-29', fin: '2026-07-11', pct: 0, parent: true },
-      { nom: 'Étanchéité', debut: '2026-03-02', fin: '2026-03-05', pct: 0, parent: false },
-    ]
-  },
-  {
-    id: 'olympiades',
-    nom: 'Les Olympiades',
-    debut: '2026-02-02',
-    fin: '2026-06-28',
-    couleur: '#4ade80',
-    lots: [
-      { nom: 'Lot 1 - Démolition / Maçonnerie', debut: '2026-02-02', fin: '2026-02-15', pct: null, parent: true },
-      { nom: 'Démolition', debut: '2026-02-02', fin: '2026-02-06', pct: null, parent: false },
-      { nom: 'Gros œuvre - Réseaux', debut: '2026-02-09', fin: '2026-02-13', pct: null, parent: false },
-      { nom: 'Lot 2 - Charpente / Couverture', debut: '2026-02-02', fin: '2026-02-22', pct: null, parent: true },
-      { nom: 'Reprise couverture', debut: '2026-02-02', fin: '2026-02-13', pct: null, parent: false },
-      { nom: 'Modification trémie', debut: '2026-02-16', fin: '2026-02-20', pct: null, parent: false },
-      { nom: 'Menuiseries', debut: '2026-03-02', fin: '2026-03-15', pct: null, parent: true },
-      { nom: 'Lot 4 - Plâtrerie', debut: '2026-03-09', fin: '2026-04-03', pct: null, parent: true },
-      { nom: 'Mise en œuvre SAD', debut: '2026-03-09', fin: '2026-03-13', pct: null, parent: false },
-      { nom: 'Ossature plafonds', debut: '2026-03-16', fin: '2026-04-03', pct: null, parent: false },
-      { nom: 'Doublages et cloisons', debut: '2026-03-16', fin: '2026-04-03', pct: null, parent: false },
-      { nom: 'Jointage', debut: '2026-04-06', fin: '2026-04-17', pct: null, parent: false },
-      { nom: 'Lot 5 - Électricité', debut: '2026-03-09', fin: '2026-04-24', pct: null, parent: true },
-      { nom: 'Alimentations élec', debut: '2026-03-09', fin: '2026-03-20', pct: null, parent: false },
-      { nom: 'Appareillage élec', debut: '2026-04-13', fin: '2026-04-24', pct: null, parent: false },
-      { nom: 'Lot 6 - Plomberie', debut: '2026-03-09', fin: '2026-05-22', pct: null, parent: true },
-      { nom: 'Alimentation EU', debut: '2026-03-09', fin: '2026-03-20', pct: null, parent: false },
-      { nom: 'Appareillage plomb', debut: '2026-05-11', fin: '2026-05-22', pct: null, parent: false },
-      { nom: 'Climatisations', debut: '2026-05-04', fin: '2026-05-08', pct: null, parent: false },
-      { nom: 'Lot 7 - Peinture', debut: '2026-04-20', fin: '2026-05-17', pct: null, parent: true },
-      { nom: 'Lot 8 - Sols', debut: '2026-05-25', fin: '2026-06-14', pct: null, parent: true },
-      { nom: 'Ragréage', debut: '2026-05-25', fin: '2026-05-29', pct: null, parent: false },
-      { nom: 'Pose des sols', debut: '2026-06-01', fin: '2026-06-12', pct: null, parent: false },
-      { nom: 'Lot 9 - Carrelage', debut: '2026-04-27', fin: '2026-05-17', pct: null, parent: true },
-      { nom: 'Lot 10 - Cuisine', debut: '2026-06-15', fin: '2026-06-28', pct: null, parent: true },
-    ]
-  },
-  {
-    id: 'javaloyes2',
-    nom: 'JAVALOYES 2 — 6 Appartements',
-    debut: '2026-02-23',
-    fin: '2026-08-09',
-    couleur: '#a78bfa',
-    lots: [
-      { nom: '01 - Gros Œuvre', debut: '2026-02-23', fin: '2026-04-17', pct: 0, parent: true },
-      { nom: 'Démol Phase 1', debut: '2026-02-23', fin: '2026-03-01', pct: 0, parent: false },
-      { nom: 'Démol Phase 2', debut: '2026-03-16', fin: '2026-03-29', pct: 0, parent: false },
-      { nom: 'Démol Phase 3', debut: '2026-03-02', fin: '2026-03-15', pct: 0, parent: false },
-      { nom: '02 - Charpente', debut: '2026-03-16', fin: '2026-04-05', pct: 0, parent: true },
-      { nom: '03 - Menuiserie', debut: '2026-04-06', fin: '2026-04-12', pct: 0, parent: true },
-      { nom: '04 - Plâtrerie', debut: '2026-04-13', fin: '2026-06-21', pct: 0, parent: true },
-      { nom: '05 - Électricité', debut: '2026-04-13', fin: '2026-06-21', pct: 0, parent: true },
-      { nom: '06 - Plomberie / Clim', debut: '2026-04-13', fin: '2026-06-21', pct: 0, parent: true },
-      { nom: '07 - Peinture', debut: '2026-06-22', fin: '2026-07-26', pct: 0, parent: true },
-      { nom: '08 - Sol PVC', debut: '2026-07-06', fin: '2026-07-26', pct: 0, parent: true },
-      { nom: '09 - Carrelage', debut: '2026-06-22', fin: '2026-07-12', pct: 0, parent: true },
-      { nom: '10 - Cuisine', debut: '2026-07-27', fin: '2026-08-09', pct: 0, parent: true },
-    ]
-  }
-];
+let GANTT_CHANTIERS = [];
 
 // ===================== CALCULS DATES =====================
-const allDates = GANTT_CHANTIERS.flatMap(c => c.lots.flatMap(l => [new Date(l.debut), new Date(l.fin)]));
-const minDate = new Date(Math.min(...allDates));
-const maxDate = new Date(Math.max(...allDates));
-minDate.setDate(1);
-maxDate.setMonth(maxDate.getMonth() + 1, 1);
-
-const totalDays = (maxDate - minDate) / 86400000;
+let minDate = new Date();
+let maxDate = new Date();
+let totalDays = 1;
 const today = new Date();
+
+function recalcGanttDates() {
+  if (GANTT_CHANTIERS.length === 0) return;
+  const allDates = GANTT_CHANTIERS.flatMap(c => c.lots.flatMap(l => [new Date(l.debut), new Date(l.fin)]));
+  minDate = new Date(Math.min(...allDates));
+  maxDate = new Date(Math.max(...allDates));
+  minDate.setDate(1);
+  maxDate.setMonth(maxDate.getMonth() + 1, 1);
+  totalDays = (maxDate - minDate) / 86400000;
+}
 
 function dateToX(dateStr) {
   const d = new Date(dateStr);

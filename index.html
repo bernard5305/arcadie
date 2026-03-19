@@ -429,18 +429,18 @@
     </div>
     <div id="fin-detail" style="display:none">
       <div class="card" style="margin-bottom:16px"><div style="padding:16px 20px;display:grid;grid-template-columns:repeat(6,1fr);gap:12px" id="fin-kpis"></div></div>
-      <div class="card"><div style="overflow-x:auto">
-        <table style="font-size:11.5px;min-width:1600px;border-collapse:collapse">
+      <div class="card"><div style="overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 280px);position:relative">
+        <table style="font-size:11.5px;min-width:2100px;border-collapse:collapse">
           <thead><tr>
-            <th style="min-width:120px">Corps de métier</th><th style="min-width:120px">Artisan</th><th style="min-width:85px">N° Devis</th>
-            <th style="min-width:75px">Devis HT</th><th style="min-width:55px">TVA</th><th style="min-width:75px;color:var(--accent)">Devis TTC</th>
-            <th style="min-width:85px">Devis→client</th><th style="min-width:75px">Validé</th><th style="min-width:75px">Valid.→artisan</th><th style="min-width:75px">Décennales</th>
-            <th style="min-width:80px;color:var(--blue)">Fac. acompte</th><th style="min-width:80px">FA→client</th><th style="min-width:80px">Chq acompte</th>
-            <th style="min-width:80px;color:var(--accent2)">Fac. inter.</th><th style="min-width:80px">FI→client</th><th style="min-width:80px">Chq inter.</th>
-            <th style="min-width:80px">Facture fin.</th><th style="min-width:80px">FF→client</th><th style="min-width:80px">Chq final</th>
-            <th style="min-width:75px;color:var(--orange)">Reste</th>
-            <th style="min-width:80px">Fac. MDT</th><th style="min-width:80px">FA MDT art.</th><th style="min-width:80px;color:var(--green)">Paiement MDT</th>
-            <th style="min-width:50px"></th>
+            <th style="min-width:130px;position:sticky;left:0;top:0;z-index:5;background:var(--surface2)">Corps de métier</th><th style="min-width:130px;position:sticky;left:130px;top:0;z-index:5;background:var(--surface2);box-shadow:2px 0 4px rgba(0,0,0,.15)">Artisan</th><th style="min-width:85px;position:sticky;top:0;z-index:3;background:var(--surface2)">N° Devis</th>
+            <th style="min-width:75px;position:sticky;top:0;z-index:3;background:var(--surface2)">Devis HT</th><th style="min-width:55px;position:sticky;top:0;z-index:3;background:var(--surface2)">TVA</th><th style="min-width:75px;color:var(--accent);position:sticky;top:0;z-index:3;background:var(--surface2)">Devis TTC</th>
+            <th style="min-width:110px;position:sticky;top:0;z-index:3;background:var(--surface2)">Devis→client</th><th style="min-width:110px;position:sticky;top:0;z-index:3;background:var(--surface2)">Validé</th><th style="min-width:110px;position:sticky;top:0;z-index:3;background:var(--surface2)">Valid.→artisan</th><th style="min-width:110px;position:sticky;top:0;z-index:3;background:var(--surface2)">Décennales</th>
+            <th style="min-width:80px;color:var(--blue);position:sticky;top:0;z-index:3;background:var(--surface2)">Fac. acompte</th><th style="min-width:110px;position:sticky;top:0;z-index:3;background:var(--surface2)">FA→client</th><th style="min-width:110px;position:sticky;top:0;z-index:3;background:var(--surface2)">Chq acompte</th>
+            <th style="min-width:80px;color:var(--accent2);position:sticky;top:0;z-index:3;background:var(--surface2)">Fac. inter.</th><th style="min-width:110px;position:sticky;top:0;z-index:3;background:var(--surface2)">FI→client</th><th style="min-width:110px;position:sticky;top:0;z-index:3;background:var(--surface2)">Chq inter.</th>
+            <th style="min-width:80px;position:sticky;top:0;z-index:3;background:var(--surface2)">Facture fin.</th><th style="min-width:110px;position:sticky;top:0;z-index:3;background:var(--surface2)">FF→client</th><th style="min-width:110px;position:sticky;top:0;z-index:3;background:var(--surface2)">Chq final</th>
+            <th style="min-width:75px;color:var(--orange);position:sticky;top:0;z-index:3;background:var(--surface2)">Reste</th>
+            <th style="min-width:80px;position:sticky;top:0;z-index:3;background:var(--surface2)">Fac. MDT</th><th style="min-width:110px;position:sticky;top:0;z-index:3;background:var(--surface2)">FA MDT art.</th><th style="min-width:80px;color:var(--green);position:sticky;top:0;z-index:3;background:var(--surface2)">Paiement MDT</th>
+            <th style="min-width:50px;position:sticky;top:0;z-index:3;background:var(--surface2)"></th>
           </tr></thead>
           <tbody id="fin-detail-body"></tbody>
           <tfoot id="fin-detail-foot" style="font-weight:700;background:var(--surface2)"></tfoot>
@@ -1033,7 +1033,7 @@ function finRenderDetail() {
   document.getElementById('fin-detail-body').innerHTML = lignes.map(l => {
     const isH=l.corps&&!l.artisan;
     return `<tr style="${isH?'background:rgba(200,169,110,0.07);font-weight:600':''}">
-      ${finCell(l,'corps')}${finCell(l,'artisan')}${finCell(l,'n_devis')}
+      <td style="position:sticky;left:0;z-index:2;background:${isH?'rgba(200,169,110,0.07)':'var(--surface)'};cursor:pointer" onclick="finEdit(this,${l._idx},'corps')">${l.corps||'—'}</td><td style="position:sticky;left:130px;z-index:2;background:${isH?'rgba(200,169,110,0.07)':'var(--surface)'};box-shadow:2px 0 4px rgba(0,0,0,.1);cursor:pointer;font-weight:${isH?600:400}" onclick="finEdit(this,${l._idx},'artisan')">${l.artisan||'—'}</td>${finCell(l,'n_devis')}
       ${finCell(l,'devis_ht')}${finCell(l,'tva')}
       <td style="color:var(--accent);font-weight:${(l.devis_ttc||0)>0?600:400};cursor:pointer" onclick="finEdit(this,${l._idx},'devis_ttc')">${finFmt(l.devis_ttc)||'—'}</td>
       ${finCell(l,'devis_envoye')}${finCell(l,'devis_valide')}${finCell(l,'devis_valide_artisan')}${finCell(l,'decennales')}

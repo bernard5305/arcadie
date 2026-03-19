@@ -1035,7 +1035,7 @@ function finRenderDetail() {
     return `<tr style="${isH?'background:rgba(200,169,110,0.07);font-weight:600':''}">
       ${finCell(l,'corps')}${finCell(l,'artisan')}${finCell(l,'n_devis')}
       ${finCell(l,'devis_ht')}${finCell(l,'tva')}
-      <td style="color:var(--accent);font-weight:${(l.devis_ttc||0)>0?600:400}">${finFmt(l.devis_ttc)||'—'}</td>
+      <td style="color:var(--accent);font-weight:${(l.devis_ttc||0)>0?600:400};cursor:pointer" onclick="finEdit(this,${l._idx},'devis_ttc')">${finFmt(l.devis_ttc)||'—'}</td>
       ${finCell(l,'devis_envoye')}${finCell(l,'devis_valide')}${finCell(l,'devis_valide_artisan')}${finCell(l,'decennales')}
       ${finCell(l,'fac_acompte')}${finCell(l,'fac_acompte_client')}${finCell(l,'cheque_acompte')}
       ${finCell(l,'fac_inter')}${finCell(l,'fi_client')}${finCell(l,'cheque_inter')}
@@ -1073,12 +1073,12 @@ function finEdit(td, idx, field) {
   inp.value=cur;
   inp.style.cssText='width:100%;min-width:60px;background:var(--surface);border:1px solid var(--accent);border-radius:4px;padding:3px 5px;color:var(--text);font-size:11px;font-family:DM Sans,sans-serif;outline:none;box-sizing:border-box';
   td.innerHTML=''; td.appendChild(inp); inp.focus(); inp.select();
-  const numF=['devis_ht','tva','fac_acompte','fac_inter','factures','reste','fac_mdt','paiement_mdt','devis_valide'];
+  const numF=['devis_ht','tva','devis_ttc','fac_acompte','fac_inter','factures','reste','fac_mdt','paiement_mdt','devis_valide'];
   const save=()=>{
     let v=inp.value.trim();
     if(numF.includes(field)) v=v===''?null:parseFloat(v.replace(',','.'))||0;
     ligne[field]=v;
-    if(field==='devis_ht'||field==='tva'){const ht=parseFloat(ligne.devis_ht)||0,tva=parseFloat(ligne.tva)||0;if(ht>0)ligne.devis_ttc=tva>1?Math.round(ht*(1+tva/100)*100)/100:Math.round(ht*1.2*100)/100;}
+    if(field==='devis_ht'||field==='tva'){const ht=parseFloat(ligne.devis_ht)||0;const tvaRaw=ligne.tva;const tva=parseFloat(tvaRaw);if(ht>0&&tvaRaw!==null&&tvaRaw!==''&&!isNaN(tva)){if(tva===0)ligne.devis_ttc=ht;else if(tva>1)ligne.devis_ttc=Math.round(ht*(1+tva/100)*100)/100;else ligne.devis_ttc=Math.round(ht*(1+tva)*100)/100;}}
     finRecalc(p);
     finSetDirty(true); // marquer non sauvegardé — sans appel API automatique
     finRenderDetail();

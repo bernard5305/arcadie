@@ -299,6 +299,9 @@
     <button class="nav-item" onclick="showPage('contacts')">
       <span class="icon">◎</span> Répertoire
     </button>
+    <button class="nav-item" onclick="showPage('frais')">
+      <span class="icon">🚗</span> Frais
+    </button>
   <div style="padding:16px 12px;border-top:1px solid var(--border)">
     <button class="nav-item" onclick="loadFromSheets()" style="color:var(--accent);width:100%">
       <span class="icon">↻</span> Sync Sheets
@@ -497,7 +500,187 @@
   </div>
 
 
+  <!-- =================== FRAIS =================== -->
+  <div class="page" id="page-frais">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="page-title">Frais de déplacement</div>
+        <div class="page-subtitle">Kilométrage, péages, parking, achats divers</div>
+      </div>
+      <button class="btn btn-primary" onclick="openFraisModal()">+ Saisir un frais</button>
+    </div>
+
+    <!-- Paramètres -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <div class="card-title">Paramètres kilométrage</div>
+        <button class="btn btn-ghost btn-sm" onclick="toggleFraisParams()">⚙ Modifier</button>
+      </div>
+      <div id="frais-params-view" style="padding:14px 20px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+        <div><span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Coût / km</span><div style="font-size:18px;font-weight:700;margin-top:4px" id="param-taux-display">0,25 €/km</div></div>
+        <div><span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Méthode</span><div style="font-size:18px;font-weight:700;margin-top:4px" id="param-methode-display">Barème fiscal</div></div>
+        <div><span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Véhicule</span><div style="font-size:18px;font-weight:700;margin-top:4px" id="param-vehicule-display">—</div></div>
+      </div>
+      <div id="frais-params-edit" style="display:none;padding:16px 20px">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Méthode de calcul km</label>
+            <select id="param-methode" onchange="fraisUpdateTaux()">
+              <option value="bareme">Barème fiscal (0,25 €/km)</option>
+              <option value="reel">Coût réel carburant</option>
+              <option value="custom">Taux personnalisé</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Taux €/km (si personnalisé)</label>
+            <input id="param-taux" type="number" step="0.01" placeholder="ex: 0.35" value="0.25">
+          </div>
+          <div class="form-group">
+            <label>Véhicule</label>
+            <input id="param-vehicule" placeholder="ex: Peugeot 308">
+          </div>
+          <div class="form-group">
+            <label>Consommation L/100 (si coût réel)</label>
+            <input id="param-conso" type="number" step="0.1" placeholder="ex: 6.5">
+          </div>
+          <div class="form-group">
+            <label>Prix carburant €/L (si coût réel)</label>
+            <input id="param-prix-carb" type="number" step="0.01" placeholder="ex: 1.75">
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="saveFraisParams()">Enregistrer</button>
+          <button class="btn btn-ghost" onclick="toggleFraisParams()">Annuler</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+      <div class="kpi gold"><div class="kpi-label">Total frais</div><div class="kpi-value" id="fk-total">—</div></div>
+      <div class="kpi blue"><div class="kpi-label">Kilométrage</div><div class="kpi-value" id="fk-km">—</div></div>
+      <div class="kpi purple"><div class="kpi-label">Péages + Parking</div><div class="kpi-value" id="fk-peage">—</div></div>
+      <div class="kpi green"><div class="kpi-label">Achats divers</div><div class="kpi-value" id="fk-divers">—</div></div>
+    </div>
+
+    <!-- Filtres -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <div class="filter-tabs" style="margin-bottom:0">
+        <button class="filter-tab active" onclick="filterFraisType('tous',this)">Tous</button>
+        <button class="filter-tab" onclick="filterFraisType('chantier',this)">Liés à un chantier</button>
+        <button class="filter-tab" onclick="filterFraisType('libre',this)">Sans chantier</button>
+      </div>
+      <select id="frais-filter-chantier" class="search-box" style="width:220px" onchange="renderFrais()">
+        <option value="">Tous les chantiers</option>
+      </select>
+      <input class="search-box" type="month" id="frais-filter-mois" style="width:160px" onchange="renderFrais()">
+    </div>
+
+    <!-- Tableau principal -->
+    <div class="card" style="margin-bottom:20px">
+      <div style="overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 400px)">
+        <table>
+          <thead><tr>
+            <th>Date</th>
+            <th>Chantier</th>
+            <th>Description</th>
+            <th>Km</th>
+            <th>Coût km</th>
+            <th>Péage</th>
+            <th>Parking</th>
+            <th>Achats divers</th>
+            <th style="color:var(--accent)">Total</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="frais-table"></tbody>
+          <tfoot id="frais-foot" style="font-weight:700;background:var(--surface2)"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Récap par chantier -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Récapitulatif par chantier</div></div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr>
+          <th>Chantier</th><th>Déplacements</th><th>Km total</th><th>Coût km</th><th>Péages</th><th>Parking</th><th>Divers</th><th style="color:var(--accent)">Total</th>
+        </tr></thead>
+        <tbody id="frais-recap"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+
 </main>
+
+
+<!-- MODAL FRAIS -->
+<div class="modal-overlay" id="modal-frais">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div><div class="modal-title" id="modal-frais-title">Nouveau frais</div></div>
+      <button class="modal-close" onclick="closeModal('modal-frais')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="form-group">
+          <label>Chantier (optionnel)</label>
+          <select id="f-chantier">
+            <option value="">— Sans chantier —</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Description / Motif</label>
+          <input id="f-desc" placeholder="ex: Visite chantier, réunion de chantier...">
+        </div>
+        <div class="form-group">
+          <label>Kilométrage (km)</label>
+          <input type="number" id="f-km" min="0" step="1" placeholder="0" oninput="fraisCalcKm()">
+        </div>
+        <div class="form-group">
+          <label>Coût km calculé</label>
+          <input type="number" id="f-cout-km" min="0" step="0.01" placeholder="0.00" style="color:var(--accent)">
+        </div>
+        <div class="form-group">
+          <label>Péage (€)</label>
+          <input type="number" id="f-peage" min="0" step="0.01" placeholder="0.00" oninput="fraisCalcTotal()">
+        </div>
+        <div class="form-group">
+          <label>Parking (€)</label>
+          <input type="number" id="f-parking" min="0" step="0.01" placeholder="0.00" oninput="fraisCalcTotal()">
+        </div>
+        <div class="form-group">
+          <label>Achats divers (€)</label>
+          <input type="number" id="f-divers" min="0" step="0.01" placeholder="0.00" oninput="fraisCalcTotal()">
+        </div>
+        <div class="form-group">
+          <label>Note achats divers</label>
+          <input id="f-divers-note" placeholder="ex: Fournitures bureau, repas...">
+        </div>
+        <div class="form-group">
+          <label>Responsable MOE</label>
+          <select id="f-moe" class="search-box">
+            <option value="MG">MG</option>
+            <option value="SD">SD</option>
+            <option value="BD">BD</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding:12px 16px;background:var(--surface2);border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px">Total déplacement</span>
+        <span style="font-size:22px;font-weight:700;font-family:Syne,sans-serif;color:var(--accent)" id="f-total-display">0,00 €</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-frais')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveFrais()">Enregistrer</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL PROJET DETAIL -->
 <div class="modal-overlay" id="modal-project">
@@ -603,7 +786,7 @@ function apiPost(data) {
 // Charger toutes les données depuis Google Sheets
 function loadFromSheets() {
   showSaving('⏳ Chargement depuis Google Sheets...');
-  apiGet('all').then(data => {
+  Promise.all([apiGet('all'), apiGet('frais'), apiGet('frais_params')]).then(([data, dataFrais, dataFraisParams]) => {
     if (data.error) {
       showToast('⚠ Erreur chargement: ' + data.error);
       return;
@@ -623,8 +806,18 @@ function loadFromSheets() {
       allContacts.length = 0;
       data.contacts.forEach(c => allContacts.push(c));
     }
+    // Charger aussi les frais
+    if (dataFrais && dataFrais.frais) {
+      allFrais.length = 0;
+      dataFrais.frais.forEach(f => allFrais.push(f));
+    }
+    if (dataFraisParams && dataFraisParams.frais_params) {
+      allFraisParamsAll = dataFraisParams.frais_params || [];
+    }
     initDashboard();
     showToast('✓ Données synchronisées');
+  }).catch(err => {
+    showToast('⚠ Erreur chargement: ' + err);
   });
 }
 
@@ -708,6 +901,7 @@ function showPage(id) {
   if (id === 'financier') { finInitKpis(); finShowList(); }
   if (id === 'administratif') renderAdm();
   if (id === 'contacts') renderContacts();
+  if (id === 'frais') initFrais();
 }
 
 // ==================== DASHBOARD ====================
@@ -1289,6 +1483,334 @@ function addNewContact() {
   renderContacts();
   saveContactToSheets(nc);
   ['nc-corps','nc-abrev','nc-nom','nc-adresse','nc-tel','nc-mail'].forEach(id => document.getElementById(id).value = '');
+}
+
+
+// ==================== FRAIS DE DEPLACEMENT ====================
+let allFrais = [];
+let fraisTypeFilter = 'tous';
+let fraisParams = { methode: 'bareme', taux: 0.25, vehicule: '', conso: 6.5, prixCarb: 1.75 };
+let fraisCurrentMoe = 'MG'; // MOE par défaut
+let fraisEditIdx = null;
+
+function initFrais() {
+  // Peupler les selects chantier
+  const opts = '<option value="">— Sans chantier —</option>' + allProjects.map(p => `<option value="${p.client}">${p.client}</option>`).join('');
+  document.getElementById('f-chantier').innerHTML = opts;
+  const recapSel = document.getElementById('frais-filter-chantier');
+  recapSel.innerHTML = '<option value="">Tous les chantiers</option>' + allProjects.map(p => `<option value="${p.client}">${p.client}</option>`).join('');
+
+  // Injecter sélecteur MOE si pas encore présent
+  if (!document.getElementById('frais-moe-sel')) {
+    const moeWrap = document.createElement('div');
+    moeWrap.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 16px;background:var(--surface);border-radius:8px;border:1px solid var(--border)';
+    moeWrap.innerHTML = `<span style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px">Responsable MOE</span>
+      <select id="frais-moe-sel" class="search-box" style="width:120px" onchange="fraisChangeMoe(this.value)">
+        <option value="MG">MG</option>
+        <option value="SD">SD</option>
+        <option value="BD">BD</option>
+      </select>
+      <span style="font-size:12px;color:var(--muted)">Les frais affichés et saisis sont ceux du MOE sélectionné</span>`;
+    const pageHeader = document.querySelector('#page-frais .page-header');
+    pageHeader.insertAdjacentElement('afterend', moeWrap);
+  }
+  document.getElementById('frais-moe-sel').value = fraisCurrentMoe;
+
+  // Charger frais et params depuis Sheets
+  loadFraisFromSheets();
+}
+
+function fraisChangeMoe(moe) {
+  fraisCurrentMoe = moe;
+  // Charger les params de ce MOE
+  const p = allFraisParamsAll.find(x => x.moe === moe);
+  if (p) {
+    fraisParams.methode = p.methode || 'bareme';
+    fraisParams.taux = parseFloat(p.taux) || 0.25;
+    fraisParams.vehicule = p.vehicule || '';
+    fraisParams.conso = parseFloat(p.conso) || 6.5;
+    fraisParams.prixCarb = parseFloat(p.prixcarb || p.prixCarb) || 1.75;
+  } else {
+    fraisParams = { methode: 'bareme', taux: 0.25, vehicule: '', conso: 6.5, prixCarb: 1.75 };
+  }
+  updateParamsDisplay();
+  renderFrais();
+}
+
+let allFraisParamsAll = [];
+
+function loadFraisFromSheets() {
+  showSaving('⏳ Chargement des frais...');
+  Promise.all([
+    apiGet('frais'),
+    apiGet('frais_params')
+  ]).then(([dataFrais, dataParams]) => {
+    if (dataFrais.frais) {
+      allFrais.length = 0;
+      dataFrais.frais.forEach(f => allFrais.push(f));
+    }
+    if (dataParams.frais_params) {
+      allFraisParamsAll = dataParams.frais_params;
+      fraisChangeMoe(fraisCurrentMoe);
+    } else {
+      updateParamsDisplay();
+    }
+    renderFrais();
+    showToast('✓ Frais chargés');
+  }).catch(err => {
+    showToast('⚠ Erreur chargement frais');
+    updateParamsDisplay();
+    renderFrais();
+  });
+}
+
+function updateParamsDisplay() {
+  const methLabels = { bareme: 'Barème fiscal', reel: 'Coût réel carburant', custom: 'Taux personnalisé' };
+  document.getElementById('param-taux-display').textContent = fraisParams.taux.toFixed(2).replace('.', ',') + ' €/km';
+  document.getElementById('param-methode-display').textContent = methLabels[fraisParams.methode] || 'Barème fiscal';
+  document.getElementById('param-vehicule-display').textContent = fraisParams.vehicule || '—';
+}
+
+function toggleFraisParams() {
+  const edit = document.getElementById('frais-params-edit');
+  const view = document.getElementById('frais-params-view');
+  if (edit.style.display === 'none') {
+    edit.style.display = 'block';
+    view.style.display = 'none';
+    document.getElementById('param-methode').value = fraisParams.methode;
+    document.getElementById('param-taux').value = fraisParams.taux;
+    document.getElementById('param-vehicule').value = fraisParams.vehicule;
+    document.getElementById('param-conso').value = fraisParams.conso;
+    document.getElementById('param-prix-carb').value = fraisParams.prixCarb;
+  } else {
+    edit.style.display = 'none';
+    view.style.display = 'grid';
+  }
+}
+
+function fraisUpdateTaux() {
+  const m = document.getElementById('param-methode').value;
+  const conso = parseFloat(document.getElementById('param-conso').value) || 6.5;
+  const prix = parseFloat(document.getElementById('param-prix-carb').value) || 1.75;
+  if (m === 'bareme') document.getElementById('param-taux').value = 0.25;
+  if (m === 'reel') document.getElementById('param-taux').value = (conso * prix / 100).toFixed(3);
+}
+
+function saveFraisParams() {
+  fraisParams.methode = document.getElementById('param-methode').value;
+  fraisParams.taux = parseFloat(document.getElementById('param-taux').value) || 0.25;
+  fraisParams.vehicule = document.getElementById('param-vehicule').value;
+  fraisParams.conso = parseFloat(document.getElementById('param-conso').value) || 6.5;
+  fraisParams.prixCarb = parseFloat(document.getElementById('param-prix-carb').value) || 1.75;
+  // Sauvegarde dans Sheets
+  apiPost({ action: 'save_frais_params', params: { ...fraisParams, moe: fraisCurrentMoe } }).then(r => {
+    if (r.success) showToast('✓ Paramètres enregistrés');
+    else showToast('⚠ Erreur: ' + (r.error || 'inconnue'));
+  });
+  updateParamsDisplay();
+  toggleFraisParams();
+}
+
+function fraisCalcKm() {
+  const km = parseFloat(document.getElementById('f-km').value) || 0;
+  const cout = km * fraisParams.taux;
+  document.getElementById('f-cout-km').value = cout.toFixed(2);
+  fraisCalcTotal();
+}
+
+function fraisCalcTotal() {
+  const km = parseFloat(document.getElementById('f-cout-km').value) || 0;
+  const peage = parseFloat(document.getElementById('f-peage').value) || 0;
+  const parking = parseFloat(document.getElementById('f-parking').value) || 0;
+  const divers = parseFloat(document.getElementById('f-divers').value) || 0;
+  const total = km + peage + parking + divers;
+  document.getElementById('f-total-display').textContent = total.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+function openFraisModal(idx) {
+  fraisEditIdx = (idx !== undefined) ? idx : null;
+  const today = new Date().toISOString().split('T')[0];
+
+  if (fraisEditIdx !== null) {
+    const f = allFrais[fraisEditIdx];
+    document.getElementById('modal-frais-title').textContent = 'Modifier le frais';
+    document.getElementById('f-date').value = f.date || today;
+    document.getElementById('f-chantier').value = f.chantier || '';
+    document.getElementById('f-desc').value = f.desc || '';
+    document.getElementById('f-km').value = f.km || '';
+    document.getElementById('f-cout-km').value = f.cout_km || '';
+    document.getElementById('f-peage').value = f.peage || '';
+    document.getElementById('f-parking').value = f.parking || '';
+    document.getElementById('f-divers').value = f.divers || '';
+    document.getElementById('f-divers-note').value = f.divers_note || '';
+  } else {
+    document.getElementById('modal-frais-title').textContent = 'Nouveau frais';
+    document.getElementById('f-date').value = today;
+    document.getElementById('f-chantier').value = '';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-km').value = '';
+    document.getElementById('f-cout-km').value = '';
+    document.getElementById('f-peage').value = '';
+    document.getElementById('f-parking').value = '';
+    document.getElementById('f-divers').value = '';
+    document.getElementById('f-divers-note').value = '';
+    document.getElementById('f-moe').value = fraisCurrentMoe;
+  }
+  fraisCalcTotal();
+  document.getElementById('modal-frais').classList.add('open');
+}
+
+function saveFrais() {
+  const km = parseFloat(document.getElementById('f-km').value) || 0;
+  const cout_km = parseFloat(document.getElementById('f-cout-km').value) || 0;
+  const peage = parseFloat(document.getElementById('f-peage').value) || 0;
+  const parking = parseFloat(document.getElementById('f-parking').value) || 0;
+  const divers = parseFloat(document.getElementById('f-divers').value) || 0;
+  const entry = {
+    date: document.getElementById('f-date').value,
+    chantier: document.getElementById('f-chantier').value,
+    desc: document.getElementById('f-desc').value,
+    km, cout_km, peage, parking, divers,
+    divers_note: document.getElementById('f-divers-note').value,
+    total: cout_km + peage + parking + divers
+  };
+  if (!entry.date) { alert('Date obligatoire'); return; }
+
+  // Ajouter le MOE au frais
+  entry.moe = document.getElementById('f-moe') ? document.getElementById('f-moe').value : fraisCurrentMoe;
+  // Si on édite, on supprime l'ancienne entrée d'abord
+  if (fraisEditIdx !== null) {
+    const old = allFrais[fraisEditIdx];
+    apiPost({ action: 'delete_frais', frais: old });
+    allFrais[fraisEditIdx] = entry;
+  } else {
+    allFrais.push(entry);
+  }
+  allFrais.sort((a, b) => b.date.localeCompare(a.date));
+  // Sauvegarde dans Sheets
+  showSaving('💾 Sauvegarde en cours...');
+  apiPost({ action: 'save_frais', frais: entry }).then(r => {
+    if (r.success) showToast('✓ Frais enregistré dans Sheets');
+    else showToast('⚠ Erreur: ' + (r.error || 'inconnue'));
+  });
+  closeModal('modal-frais');
+  renderFrais();
+}
+
+function deleteFrais(idx) {
+  if (!confirm('Supprimer ce frais ?')) return;
+  const f = allFrais[idx];
+  allFrais.splice(idx, 1);
+  showSaving('🗑 Suppression...');
+  apiPost({ action: 'delete_frais', frais: f }).then(r => {
+    if (r.success) showToast('✓ Frais supprimé');
+    else showToast('⚠ Erreur suppression: ' + (r.error || 'inconnue'));
+  });
+  renderFrais();
+}
+
+function filterFraisType(f, btn) {
+  fraisTypeFilter = f;
+  document.querySelectorAll('#page-frais .filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFrais();
+}
+
+function renderFrais() {
+  const chantierSel = document.getElementById('frais-filter-chantier').value;
+  const moisSel = document.getElementById('frais-filter-mois').value;
+
+  let data = [...allFrais];
+  if (fraisTypeFilter === 'chantier') data = data.filter(f => f.chantier);
+  if (fraisTypeFilter === 'libre') data = data.filter(f => !f.chantier);
+  if (chantierSel) data = data.filter(f => f.chantier === chantierSel);
+  if (moisSel) data = data.filter(f => f.date && f.date.startsWith(moisSel));
+
+  const fmtE = n => n ? n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : '—';
+  const fmtE0 = n => n ? n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : '';
+
+  // KPIs
+  const totKm = data.reduce((s, f) => s + (f.cout_km || 0), 0);
+  const totPeage = data.reduce((s, f) => s + (f.peage || 0) + (f.parking || 0), 0);
+  const totDivers = data.reduce((s, f) => s + (f.divers || 0), 0);
+  const totTotal = data.reduce((s, f) => s + (f.total || 0), 0);
+  document.getElementById('fk-total').textContent = fmtE(totTotal);
+  document.getElementById('fk-km').textContent = fmtE(totKm);
+  document.getElementById('fk-peage').textContent = fmtE(totPeage);
+  document.getElementById('fk-divers').textContent = fmtE(totDivers);
+
+  // Tableau principal
+  const tbody = document.getElementById('frais-table');
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty"><div class="empty-icon">🚗</div>Aucun frais enregistré</div></td></tr>';
+    document.getElementById('frais-foot').innerHTML = '';
+  } else {
+    const realIdx = (entry) => allFrais.indexOf(entry);
+    tbody.innerHTML = data.map(f => {
+      const ri = realIdx(f);
+      return `<tr>
+        <td style="white-space:nowrap">${f.date ? new Date(f.date + 'T00:00:00').toLocaleDateString('fr-FR') : '—'}</td>
+        <td>${f.chantier ? `<span class="badge badge-blue">${f.chantier}</span>` : '<span class="badge badge-muted">libre</span>'}</td>
+        <td style="color:var(--muted);font-size:12px">${f.desc || '—'}</td>
+        <td>${f.km ? f.km + ' km' : '—'}</td>
+        <td>${fmtE0(f.cout_km)}</td>
+        <td>${fmtE0(f.peage)}</td>
+        <td>${fmtE0(f.parking)}</td>
+        <td>${f.divers ? fmtE0(f.divers) + (f.divers_note ? '<br><span style="font-size:10px;color:var(--muted)">' + f.divers_note + '</span>' : '') : ''}</td>
+        <td style="font-weight:700;color:var(--accent)">${fmtE(f.total)}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="openFraisModal(${ri})" style="margin-right:4px">✏</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFrais(${ri})">✕</button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    const totKmRaw = data.reduce((s, f) => s + (f.km || 0), 0);
+    document.getElementById('frais-foot').innerHTML = `<tr>
+      <td colspan="3" style="padding:10px 16px;font-size:12px;color:var(--muted)">TOTAL (${data.length} dépl.)</td>
+      <td style="padding:10px 16px">${totKmRaw} km</td>
+      <td style="padding:10px 16px">${fmtE(totKm)}</td>
+      <td style="padding:10px 16px">${fmtE(data.reduce((s,f)=>s+(f.peage||0),0))}</td>
+      <td style="padding:10px 16px">${fmtE(data.reduce((s,f)=>s+(f.parking||0),0))}</td>
+      <td style="padding:10px 16px">${fmtE(totDivers)}</td>
+      <td style="padding:10px 16px;color:var(--accent)">${fmtE(totTotal)}</td>
+      <td></td>
+    </tr>`;
+  }
+
+  // Récap par chantier (sur toutes les données non filtrées par chantier)
+  let dataRecap = [...allFrais];
+  if (moisSel) dataRecap = dataRecap.filter(f => f.date && f.date.startsWith(moisSel));
+
+  const byChantier = {};
+  dataRecap.forEach(f => {
+    const key = f.chantier || '— Sans chantier —';
+    if (!byChantier[key]) byChantier[key] = { n: 0, km: 0, cout_km: 0, peage: 0, parking: 0, divers: 0, total: 0 };
+    const c = byChantier[key];
+    c.n++; c.km += (f.km||0); c.cout_km += (f.cout_km||0);
+    c.peage += (f.peage||0); c.parking += (f.parking||0);
+    c.divers += (f.divers||0); c.total += (f.total||0);
+  });
+
+  const recap = document.getElementById('frais-recap');
+  const keys = Object.keys(byChantier).sort((a, b) => a.localeCompare(b, 'fr'));
+  if (keys.length === 0) {
+    recap.innerHTML = '<tr><td colspan="8"><div class="empty" style="padding:30px">Aucune donnée</div></td></tr>';
+  } else {
+    recap.innerHTML = keys.map(k => {
+      const c = byChantier[k];
+      return `<tr>
+        <td><strong>${k}</strong></td>
+        <td>${c.n}</td>
+        <td>${c.km} km</td>
+        <td>${fmtE(c.cout_km)}</td>
+        <td>${fmtE(c.peage)}</td>
+        <td>${fmtE(c.parking)}</td>
+        <td>${fmtE(c.divers)}</td>
+        <td style="font-weight:700;color:var(--accent)">${fmtE(c.total)}</td>
+      </tr>`;
+    }).join('');
+  }
 }
 
 // ==================== MODALS ====================

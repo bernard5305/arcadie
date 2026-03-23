@@ -345,12 +345,6 @@
       <div style="padding:12px 0" id="dash-alerts"></div>
     </div>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Vue financière par chantier</div>
-      </div>
-      <div style="padding:20px 20px 8px" id="dash-bars"></div>
-    </div>
   </div>
 
   <!-- =================== PROJETS =================== -->
@@ -735,8 +729,8 @@ function initDashboard() {
 
   function getStage(p) {
     const facture = (p.total_fac_acompte||0) + (p.total_fac_inter||0) + (p.total_factures||0);
-    if (p.total_reste <= 0 && p.total_devis_ttc > 0) return 'solde';
     const pct = p.total_devis_ttc > 0 ? facture / p.total_devis_ttc * 100 : 0;
+    if (pct >= 100) return 'solde';
     if (pct === 0) return 'devis';
     if (pct >= 80) return 'reception';
     return 'encours';
@@ -769,7 +763,7 @@ function initDashboard() {
   const badgeColors = { devis: 'badge-muted', encours: 'badge-blue', reception: 'badge-orange', solde: 'badge-green' };
   const stageLabels = { devis: 'Devis', encours: 'En cours', reception: 'Réception', solde: 'Soldé' };
 
-  const sorted = [...projs].sort((a, b) => stageOrder[getStage(b)] - stageOrder[getStage(a)] || b.total_devis_ttc - a.total_devis_ttc);
+  const sorted = [...projs].sort((a, b) => a.client.localeCompare(b.client, 'fr', {sensitivity:'base'}));
 
   barsDiv.innerHTML = sorted.map(p => {
     const stage = getStage(p);
@@ -811,24 +805,6 @@ function initDashboard() {
       </div>`).join('');
   }
 
-  // Bars
-  const barChartDiv = document.getElementById('dash-bars');
-  const top10 = [...allProjects].filter(p => p.total_devis_ttc > 0).sort((a,b) => b.total_devis_ttc - a.total_devis_ttc).slice(0,10);
-  const maxVal = top10[0]?.total_devis_ttc || 1;
-  barChartDiv.innerHTML = top10.map(p => {
-    const pct = (p.total_devis_ttc / maxVal * 100).toFixed(1);
-    const mdtPct = p.total_devis_ttc > 0 ? ((p.total_mdt||0) / p.total_devis_ttc * 100).toFixed(1) : 0;
-    return `
-      <div style="margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-          <span style="font-size:12px;font-weight:500">${p.client}</span>
-          <span style="font-size:12px;color:var(--muted)">${fmt(p.total_devis_ttc)}</span>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--accent2),var(--accent))"></div>
-        </div>
-      </div>`;
-  }).join('');
 }
 
 // ==================== PROJETS ====================

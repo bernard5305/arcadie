@@ -215,6 +215,36 @@
   #fin-detail-body td { white-space:nowrap; }
   #fin-detail-body td[onclick]:hover { background:rgba(200,169,110,.08)!important; }
   #fin-detail thead th { white-space:nowrap; }
+
+  /* INSERT ROW between lines */
+  .fin-insert-row td { padding:0 !important; border:none !important; height:0; overflow:visible; position:relative; }
+  .fin-insert-row { height:0; }
+  .fin-insert-btn-wrap {
+    position:absolute; left:50%; transform:translateX(-50%) translateY(-50%);
+    z-index:20; pointer-events:none; opacity:0; transition:opacity .15s;
+    white-space:nowrap;
+  }
+  .fin-insert-row:hover .fin-insert-btn-wrap,
+  .fin-insert-row:focus-within .fin-insert-btn-wrap { opacity:1; pointer-events:all; }
+  .fin-insert-row td:first-child { position:relative; overflow:visible; }
+  .fin-insert-trigger {
+    position:absolute; left:0; right:0; top:-6px; height:12px;
+    cursor:pointer; z-index:19;
+  }
+  .fin-insert-trigger:hover ~ td { background:transparent; }
+  /* Show the divider line on hover */
+  .fin-insert-row:hover td::before {
+    content:''; position:absolute; left:0; right:0; top:50%;
+    height:1px; background:rgba(200,169,110,.25); pointer-events:none;
+  }
+  .fin-insert-btn {
+    background:var(--accent); color:#1a1200; border:none; border-radius:50%;
+    width:18px; height:18px; font-size:14px; font-weight:700; line-height:1;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 8px rgba(0,0,0,.4); pointer-events:all;
+    padding:0; font-family:'DM Sans',sans-serif;
+  }
+  .fin-insert-btn:hover { background:var(--text); transform:scale(1.15); }
   /* Scrollbar */
   ::-webkit-scrollbar { width:6px; height:6px; }
   ::-webkit-scrollbar-track { background:transparent; }
@@ -1249,9 +1279,26 @@ function finCell(l, field) {
 function finRenderDetail() {
   const p = finCurrentProjet;
   const lignes = (p.lignes||[]).filter(l=>l.corps||l.artisan).map((l,i)=>({...l,_idx:i}));
-  document.getElementById('fin-detail-body').innerHTML = lignes.map(l => {
+  const COL_COUNT = 24; // nombre de colonnes dans le tableau
+
+  function insertRowHtml(afterVisualIdx) {
+    // afterVisualIdx = -1 → avant la 1ère ligne, sinon après la ligne d'index afterVisualIdx
+    // On insère dans p.lignes à la position globale correspondante
+    return `<tr class="fin-insert-row">
+      <td colspan="${COL_COUNT}" style="position:relative;height:0;padding:0;border:none;overflow:visible">
+        <div class="fin-insert-btn-wrap">
+          <button class="fin-insert-btn" title="Insérer une ligne ici" onclick="finInsertLigne(${afterVisualIdx})">+</button>
+        </div>
+      </td>
+    </tr>`;
+  }
+
+  const rows = [];
+  // Ligne d'insertion avant la première ligne
+  rows.push(insertRowHtml(-1));
+  lignes.forEach((l, vi) => {
     const isH=l.corps&&!l.artisan;
-    return `<tr style="${isH?'background:rgba(200,169,110,0.07);font-weight:600':''}">
+    rows.push(`<tr style="${isH?'background:rgba(200,169,110,0.07);font-weight:600':''}">
       <td style="position:sticky;left:0;z-index:2;background:${isH?'rgba(200,169,110,0.07)':'var(--surface)'};cursor:pointer" onclick="finEdit(this,${l._idx},'corps')">${l.corps||'—'}</td><td style="position:sticky;left:130px;z-index:2;background:${isH?'rgba(200,169,110,0.07)':'var(--surface)'};box-shadow:2px 0 4px rgba(0,0,0,.1);cursor:pointer;font-weight:${isH?600:400}" onclick="finEdit(this,${l._idx},'artisan')">${l.artisan||'—'}</td>${finCell(l,'n_devis')}
       ${finCell(l,'devis_ht')}${finCell(l,'tva')}
       <td style="color:var(--accent);font-weight:${(l.devis_ttc||0)>0?600:400};cursor:pointer" onclick="finEdit(this,${l._idx},'devis_ttc')">${finFmt(l.devis_ttc)||'—'}</td>
@@ -1262,8 +1309,12 @@ function finRenderDetail() {
       <td style="color:${(l.reste||0)>0?'var(--orange)':'var(--muted)'};font-weight:${(l.reste||0)>0?600:400}">${finFmt(l.reste)||'—'}</td>
       ${finCell(l,'fac_mdt')}${finCell(l,'fa_mdt_artisan')}${finCell(l,'paiement_mdt')}
       <td><button class="btn btn-danger btn-sm" onclick="finDelLigne(${l._idx})">✕</button></td>
-    </tr>`;
-  }).join('');
+    </tr>`);
+    // Ligne d'insertion après chaque ligne
+    rows.push(insertRowHtml(vi));
+  });
+
+  document.getElementById('fin-detail-body').innerHTML = rows.join('');
   const sum=f=>lignes.reduce((s,l)=>s+(parseFloat(l[f])||0),0);
   document.getElementById('fin-detail-foot').innerHTML=`<tr>
     <td colspan="3" style="padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1px">TOTAL</td>
@@ -1315,6 +1366,32 @@ function finRecalc(p) {
   p.total_factures=ls.reduce((s,l)=>s+(parseFloat(l.factures)||0),0);
   p.total_reste=ls.reduce((s,l)=>s+(parseFloat(l.reste)||0),0);
   p.total_mdt=ls.reduce((s,l)=>s+(parseFloat(l.paiement_mdt)||0),0);
+}
+
+function finInsertLigne(afterVisualIdx) {
+  if (!finCurrentProjet) return;
+  const corps = prompt('Corps de métier :'); if (corps === null) return;
+  const artisan = prompt('Artisan / Entreprise :') || '';
+  const newLigne = {corps, artisan, n_devis:null, devis_ht:null, tva:null, devis_ttc:null, devis_envoye:null, devis_valide:null, devis_valide_artisan:null, decennales:null, fac_acompte:null, fac_acompte_client:null, cheque_acompte:null, fac_inter:null, fi_client:null, cheque_inter:null, factures:null, fa_client:null, cheque_artisan:null, reste:null, fac_mdt:null, fa_mdt_artisan:null, paiement_mdt:null};
+  const p = finCurrentProjet;
+  // Trouver les lignes visibles (filtrées) pour calculer la position globale
+  const visibleLignes = (p.lignes||[]).filter(l=>l.corps||l.artisan);
+  if (afterVisualIdx < 0) {
+    // Insérer avant la première ligne visible
+    if (visibleLignes.length === 0) {
+      p.lignes.push(newLigne);
+    } else {
+      const firstGlobal = p.lignes.indexOf(visibleLignes[0]);
+      p.lignes.splice(firstGlobal, 0, newLigne);
+    }
+  } else {
+    // Insérer après la ligne visible d'index afterVisualIdx
+    const refLigne = visibleLignes[afterVisualIdx];
+    const globalIdx = p.lignes.indexOf(refLigne);
+    p.lignes.splice(globalIdx + 1, 0, newLigne);
+  }
+  finSetDirty(true);
+  finRenderDetail();
 }
 
 function finAddLigne() {

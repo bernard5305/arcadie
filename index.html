@@ -857,10 +857,11 @@ function loadFromSheets() {
       allFrais.length = 0;
       dataFrais.frais.forEach(f => allFrais.push(f));
     }
-    if (dataFraisParams && dataFraisParams.frais_params) {
-      allFraisParamsAll = dataFraisParams.frais_params || [];
-      fraisChangeMoe(fraisCurrentMoe);
+    if (dataFraisParams && dataFraisParams.frais_params && dataFraisParams.frais_params.length > 0) {
+      allFraisParamsAll = dataFraisParams.frais_params;
     }
+    rebuildFraisParamsFromFrais();
+    fraisChangeMoe(fraisCurrentMoe);
     initDashboard();
     showToast('✓ Données synchronisées');
   }).catch(err => {
@@ -1622,10 +1623,10 @@ function fraisChangeMoe(moe) {
   // Charger les params de ce MOE
   const p = allFraisParamsAll.find(x => String(x.moe || '').trim() === fraisCurrentMoe);
   if (p) {
-    fraisParams.methode = p.methode || 'bareme';
-    fraisParams.taux = parseFloat(p.taux) || 0.25;
-    fraisParams.vehicule = p.vehicule || '';
-    fraisParams.conso = parseFloat(p.conso) || 6.5;
+    fraisParams.methode  = p.methode || 'bareme';
+    fraisParams.taux     = parseFloat(p.taux) || 0.25;
+    fraisParams.vehicule = p.vehicule || p['véhicule'] || '';
+    fraisParams.conso    = parseFloat(p.conso || p['consommation l/100']) || 6.5;
     fraisParams.prixCarb = parseFloat(p.prixcarb || p.prixCarb) || 1.75;
   } else {
     fraisParams = { methode: 'bareme', taux: 0.25, vehicule: '', conso: 6.5, prixCarb: 1.75 };
@@ -1635,6 +1636,26 @@ function fraisChangeMoe(moe) {
 }
 
 let allFraisParamsAll = [];
+
+// Reconstruit allFraisParamsAll depuis allFrais (fallback si FRAIS_PARAMS vide)
+// Chaque ligne frais peut contenir véhicule et consommation l/100 (colonnes M/N du sheet)
+function rebuildFraisParamsFromFrais() {
+  if (allFraisParamsAll.length > 0) return; // déjà chargé
+  const byMoe = {};
+  allFrais.forEach(f => {
+    const moe = String(f.moe || '').trim();
+    if (!moe) return;
+    if (!byMoe[moe]) {
+      byMoe[moe] = {
+        moe,
+        methode: 'bareme', taux: 0.25, prixCarb: 1.75,
+        vehicule: f['véhicule'] || f.vehicule || '',
+        conso: parseFloat(f['consommation l/100'] || f.conso) || 6.5
+      };
+    }
+  });
+  allFraisParamsAll = Object.values(byMoe);
+}
 
 function loadFraisFromSheets() {
   showSaving('⏳ Chargement des frais...');
@@ -1646,12 +1667,11 @@ function loadFraisFromSheets() {
       allFrais.length = 0;
       dataFrais.frais.forEach(f => allFrais.push(f));
     }
-    if (dataParams.frais_params) {
+    if (dataParams.frais_params && dataParams.frais_params.length > 0) {
       allFraisParamsAll = dataParams.frais_params;
-      fraisChangeMoe(fraisCurrentMoe);
-    } else {
-      updateParamsDisplay();
     }
+    rebuildFraisParamsFromFrais();
+    fraisChangeMoe(fraisCurrentMoe);
     renderFrais();
     showToast('✓ Frais chargés');
   }).catch(err => {
@@ -1714,9 +1734,9 @@ function fraisModalChangeMoe(moe) {
   const p = allFraisParamsAll.find(x => x.moe === moe);
   let taux, vehicule, conso;
   if (p) {
-    taux    = parseFloat(p.taux) || 0.25;
-    vehicule = p.vehicule || '—';
-    conso   = parseFloat(p.conso) || null;
+    taux     = parseFloat(p.taux) || 0.25;
+    vehicule = p.vehicule || p['véhicule'] || '—';
+    conso    = parseFloat(p.conso || p['consommation l/100']) || null;
     const methode = p.methode || 'bareme';
     if (methode === 'reel' && conso && p.prixcarb) {
       taux = (conso * parseFloat(p.prixcarb || p.prixCarb)) / 100;
@@ -1741,8 +1761,9 @@ function fraisCalcKm() {
   let taux = fraisParams.taux;
   if (p) {
     taux = parseFloat(p.taux) || 0.25;
-    if ((p.methode || 'bareme') === 'reel' && p.conso && p.prixcarb) {
-      taux = (parseFloat(p.conso) * parseFloat(p.prixcarb || p.prixCarb)) / 100;
+    const consoVal = p.conso || p['consommation l/100'];
+    if ((p.methode || 'bareme') === 'reel' && consoVal && p.prixcarb) {
+      taux = (parseFloat(consoVal) * parseFloat(p.prixcarb || p.prixCarb)) / 100;
     }
   }
   const km = parseFloat(document.getElementById('f-km').value) || 0;

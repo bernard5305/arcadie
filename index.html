@@ -859,6 +859,7 @@ function loadFromSheets() {
     }
     if (dataFraisParams && dataFraisParams.frais_params) {
       allFraisParamsAll = dataFraisParams.frais_params || [];
+      fraisChangeMoe(fraisCurrentMoe);
     }
     initDashboard();
     showToast('✓ Données synchronisées');

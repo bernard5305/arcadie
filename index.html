@@ -1614,9 +1614,12 @@ function initFrais() {
 }
 
 function fraisChangeMoe(moe) {
-  fraisCurrentMoe = moe;
+  fraisCurrentMoe = String(moe || 'MG').trim();
+  // Synchroniser le sélecteur visible
+  const sel = document.getElementById('frais-moe-sel');
+  if (sel) sel.value = fraisCurrentMoe;
   // Charger les params de ce MOE
-  const p = allFraisParamsAll.find(x => x.moe === moe);
+  const p = allFraisParamsAll.find(x => String(x.moe || '').trim() === fraisCurrentMoe);
   if (p) {
     fraisParams.methode = p.methode || 'bareme';
     fraisParams.taux = parseFloat(p.taux) || 0.25;
@@ -1853,7 +1856,7 @@ function renderFrais() {
 
   let data = [...allFrais];
   // Filtre MOE : on n'affiche que les frais du MOE sélectionné
-  data = data.filter(f => (f.moe || '') === fraisCurrentMoe);
+  data = data.filter(f => String(f.moe || '').trim() === fraisCurrentMoe);
   if (fraisTypeFilter === 'chantier') data = data.filter(f => f.chantier);
   if (fraisTypeFilter === 'libre') data = data.filter(f => !f.chantier);
   if (chantierSel) data = data.filter(f => f.chantier === chantierSel);
@@ -1912,7 +1915,7 @@ function renderFrais() {
   }
 
   // Récap par chantier (filtré par MOE courant)
-  let dataRecap = allFrais.filter(f => (f.moe || '') === fraisCurrentMoe);
+  let dataRecap = allFrais.filter(f => String(f.moe || '').trim() === fraisCurrentMoe);
   if (moisSel) dataRecap = dataRecap.filter(f => f.date && f.date.startsWith(moisSel));
 
   const byChantier = {};

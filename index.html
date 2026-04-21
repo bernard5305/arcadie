@@ -1852,6 +1852,8 @@ function renderFrais() {
   const moisSel = document.getElementById('frais-filter-mois').value;
 
   let data = [...allFrais];
+  // Filtre MOE : on n'affiche que les frais du MOE sélectionné
+  data = data.filter(f => (f.moe || '') === fraisCurrentMoe);
   if (fraisTypeFilter === 'chantier') data = data.filter(f => f.chantier);
   if (fraisTypeFilter === 'libre') data = data.filter(f => !f.chantier);
   if (chantierSel) data = data.filter(f => f.chantier === chantierSel);
@@ -1882,7 +1884,7 @@ function renderFrais() {
       return `<tr>
         <td style="white-space:nowrap">${f.date ? new Date(f.date + 'T00:00:00').toLocaleDateString('fr-FR') : '—'}</td>
         <td>${f.chantier ? `<span class="badge badge-blue">${f.chantier}</span>` : '<span class="badge badge-muted">libre</span>'}</td>
-        <td style="color:var(--muted);font-size:12px">${f.desc || '—'}</td>
+        <td style="color:var(--muted);font-size:12px">${f.description || f.desc || '—'}</td>
         <td>${f.km ? f.km + ' km' : '—'}</td>
         <td>${fmtE0(f.cout_km)}</td>
         <td>${fmtE0(f.peage)}</td>
@@ -1909,8 +1911,8 @@ function renderFrais() {
     </tr>`;
   }
 
-  // Récap par chantier (sur toutes les données non filtrées par chantier)
-  let dataRecap = [...allFrais];
+  // Récap par chantier (filtré par MOE courant)
+  let dataRecap = allFrais.filter(f => (f.moe || '') === fraisCurrentMoe);
   if (moisSel) dataRecap = dataRecap.filter(f => f.date && f.date.startsWith(moisSel));
 
   const byChantier = {};

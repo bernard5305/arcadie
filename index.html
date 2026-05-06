@@ -2298,6 +2298,11 @@ function etudeExportPDF() {
 }
 
 function etudeDoExport() {
+  // Formatage sûr pour jsPDF (pas d'espace fine unicode)
+  function fmt(v) {
+    if(!v) return '0 €';
+    return String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' €';
+  }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
   const W = 210, H = 297, M = 12;
@@ -2442,8 +2447,8 @@ function etudeDoExport() {
 
     // Montants
     doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...NAVY);
-    if(row.mini) doc.text(fmtEuro(row.mini), C.mini.x+C.mini.w/2, rY+rh/2, {align:'center',baseline:'middle'});
-    if(row.maxi) doc.text(fmtEuro(row.maxi), C.maxi.x+C.maxi.w/2, rY+rh/2, {align:'center',baseline:'middle'});
+    if(row.mini) doc.text(fmt(row.mini), C.mini.x+C.mini.w/2, rY+rh/2, {align:'center',baseline:'middle'});
+    if(row.maxi) doc.text(fmt(row.maxi), C.maxi.x+C.maxi.w/2, rY+rh/2, {align:'center',baseline:'middle'});
 
     rY += rh;
   });
@@ -2456,8 +2461,8 @@ function etudeDoExport() {
   doc.setTextColor(...ACCENT); doc.setFont('helvetica','bold'); doc.setFontSize(10);
   doc.text('TOTAL', M+C.lot.w/2, rY+8, {align:'center'});
   doc.setTextColor(...WHITE); doc.setFontSize(9);
-  doc.text(fmtEuro(tMin), C.mini.x+C.mini.w/2, rY+8, {align:'center'});
-  doc.text(fmtEuro(tMax), C.maxi.x+C.maxi.w/2, rY+8, {align:'center'});
+  doc.text(fmt(tMin), C.mini.x+C.mini.w/2, rY+8, {align:'center'});
+  doc.text(fmt(tMax), C.maxi.x+C.maxi.w/2, rY+8, {align:'center'});
   rY += 14;
 
   // Mention légale

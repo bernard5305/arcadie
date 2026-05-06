@@ -332,6 +332,9 @@
     <button class="nav-item" onclick="showPage('frais')">
       <span class="icon">🚗</span> Frais
     </button>
+    <button class="nav-item" onclick="showPage('etude')">
+      <span class="icon">📋</span> Étude
+    </button>
   <div style="padding:16px 12px;border-top:1px solid var(--border)">
     <button class="nav-item" onclick="loadFromSheets()" style="color:var(--accent);width:100%">
       <span class="icon">↻</span> Sync Sheets
@@ -794,6 +797,162 @@
     </div>
   </div>
 </div>
+
+<!-- ============================================================ -->
+<!-- PAGE ÉTUDE DE FAISABILITÉ -->
+<!-- ============================================================ -->
+<div class="page" id="page-etude">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <div class="page-title">Étude de faisabilité</div>
+      <div class="page-subtitle">Estimation budgétaire travaux — saisie libre, export PDF</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn btn-ghost btn-sm" onclick="etudeReset()" title="Nouvelle étude vierge">🗑 Réinitialiser</button>
+      <button class="btn btn-primary" onclick="etudeExportPDF()">⬇ Export PDF</button>
+    </div>
+  </div>
+
+  <!-- EN-TÊTE PROJET -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header">
+      <div class="card-title">Informations du projet</div>
+    </div>
+    <div style="padding:20px">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;gap:16px">
+        <div class="form-group">
+          <label>Nom du projet</label>
+          <input id="etude-nom" type="text" placeholder="Ex. LES OLYMPIADES" />
+        </div>
+        <div class="form-group">
+          <label>Adresse du bien</label>
+          <input id="etude-adresse" type="text" placeholder="913 rue Mounet Sully 24100 Bergerac" />
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input id="etude-date" type="date" />
+        </div>
+        <div class="form-group">
+          <label>Type de bien</label>
+          <input id="etude-typebien" type="text" placeholder="Immeuble, Maison, Appartement…" />
+        </div>
+        <div class="form-group" style="grid-column:2/-1">
+          <label>Type de travaux</label>
+          <input id="etude-typetravaux" type="text" placeholder="Création d'un T2 RDC et 4 T1 y compris commun" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLEAU DES LOTS -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Estimation par lot</div>
+      <div class="card-actions">
+        <button class="btn btn-ghost btn-sm" onclick="etudeAddRow()">+ Ajouter un lot</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="etude-table" style="table-layout:fixed">
+        <colgroup>
+          <col style="width:200px">
+          <col style="width:auto">
+          <col style="width:140px">
+          <col style="width:140px">
+          <col style="width:48px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th style="width:200px">LOT</th>
+            <th>DESCRIPTION</th>
+            <th style="width:140px;text-align:right">BUDGET TTC* MINI</th>
+            <th style="width:140px;text-align:right">BUDGET TTC* MAXI</th>
+            <th style="width:48px"></th>
+          </tr>
+        </thead>
+        <tbody id="etude-tbody"></tbody>
+        <tfoot>
+          <tr style="background:var(--surface2);font-weight:700;font-family:'Syne',sans-serif">
+            <td colspan="2" style="font-size:14px;letter-spacing:.5px;color:var(--accent)">TOTAL</td>
+            <td style="text-align:right;font-size:15px;color:var(--green)" id="etude-total-mini">0 €</td>
+            <td style="text-align:right;font-size:15px;color:var(--green)" id="etude-total-maxi">0 €</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid var(--border)">
+      <p style="font-size:11px;color:var(--muted);font-style:italic">* Ce budget est une estimation des travaux à effectuer et ne constitue pas un devis, lequel sera de la seule responsabilité du ou des entreprises du bâtiment en charge des travaux que le futur maître d'ouvrage choisira. La liste ci-dessus est non exhaustive des besoins spécifiques du futur client.</p>
+    </div>
+  </div>
+</div>
+
+<!-- CSS pour l'étude inline editable cells -->
+<style>
+  .etude-lot-input, .etude-desc-input, .etude-num-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    width: 100%;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background .15s;
+  }
+  .etude-lot-input:hover, .etude-desc-input:hover, .etude-num-input:hover,
+  .etude-lot-input:focus, .etude-desc-input:focus, .etude-num-input:focus {
+    background: var(--surface2);
+  }
+  .etude-lot-input { font-weight:600; color:var(--accent); }
+  .etude-desc-input { min-height:38px; resize:none; overflow:hidden; line-height:1.5; }
+  .etude-num-input { text-align:right; width:120px; }
+  .etude-del-btn {
+    background:none; border:none; color:var(--muted); cursor:pointer;
+    font-size:16px; padding:4px 6px; border-radius:4px; transition:all .15s;
+    display:block; margin:auto;
+  }
+  .etude-del-btn:hover { color:var(--red); background:rgba(248,113,113,.1); }
+  #etude-tbody tr:hover .etude-del-btn { color:var(--muted); }
+
+  /* Barre d'insertion entre les lignes */
+  .etude-insert-row td { border:none !important; background:transparent !important; }
+  .etude-insert-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity .15s;
+    padding: 0 16px;
+    height: 6px;
+  }
+  #etude-tbody:has(.etude-insert-row:hover) .etude-insert-bar { opacity: 0; }
+  .etude-insert-row:hover .etude-insert-bar { opacity: 1 !important; }
+  .etude-insert-line {
+    flex: 1;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .etude-insert-plus {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #1a1200;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: -6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  }
+</style>
 
 <div class="toast" id="toast"></div>
 
@@ -1985,7 +2144,411 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-item')[0].classList.add('active');
   // Puis charger les données fraîches depuis Sheets
   setTimeout(() => loadFromSheets(), 500);
+  etudeInit();
 });
+
+
+// ============================================================
+// ONGLET ÉTUDE DE FAISABILITÉ
+// ============================================================
+
+const ETUDE_LOTS_DEFAULT = [
+  { lot:'Démolition – Gros œuvre', desc:'Dépose salle de bains, éléments cuisine et wc sanitaire. Cloisons, revêtements de sols et de murs et plafonnettes, création ouverture dans mur porteur, raccordement tout à l\'égout.', mini:0, maxi:0 },
+  { lot:'Charpente', desc:'', mini:0, maxi:0 },
+  { lot:'Menuiserie', desc:'', mini:0, maxi:0 },
+  { lot:'Plâtrerie', desc:'', mini:0, maxi:0 },
+  { lot:'Électricité', desc:'', mini:0, maxi:0 },
+  { lot:'Plomberie / Salle de bain', desc:'', mini:0, maxi:0 },
+  { lot:'Finition murs & plafonds', desc:'', mini:0, maxi:0 },
+  { lot:'Revêtement de sol', desc:'', mini:0, maxi:0 },
+  { lot:'Maîtrise d\'œuvre', desc:'Relevé sur site\nÉtablissement plan état des lieux et projet\nÉtablissement planning de chantier\nSuivi technique et financier du projet\nAide à la réception des travaux\nAssurance décennale maîtrise d\'œuvre', mini:0, maxi:0 },
+];
+
+let etudeRows = [];
+
+function etudeInit() {
+  // Pré-remplir avec les lots par défaut
+  etudeRows = ETUDE_LOTS_DEFAULT.map(r => ({ ...r }));
+  // Date du jour
+  document.getElementById('etude-date').valueAsDate = new Date();
+  etudeRender();
+}
+
+function etudeRender() {
+  const tbody = document.getElementById('etude-tbody');
+  tbody.innerHTML = '';
+
+  etudeRows.forEach((row, i) => {
+    // ── Séparateur "insérer ici" avant chaque ligne ──
+    const sep = document.createElement('tr');
+    sep.className = 'etude-insert-row';
+    sep.innerHTML = `<td colspan="5" style="padding:0;height:6px;position:relative;border:none">
+      <div class="etude-insert-bar" onclick="etudeInsertRow(${i})" title="Insérer un lot ici">
+        <span class="etude-insert-line"></span>
+        <span class="etude-insert-plus">+</span>
+        <span class="etude-insert-line"></span>
+      </div>
+    </td>`;
+    tbody.appendChild(sep);
+
+    // ── Ligne de données ──
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="vertical-align:top;padding:8px 16px">
+        <input class="etude-lot-input" value="${escH(row.lot)}" placeholder="Nom du lot"
+          oninput="etudeRows[${i}].lot=this.value" />
+      </td>
+      <td style="vertical-align:top;padding:8px 16px">
+        <textarea class="etude-desc-input" rows="2" placeholder="Description des travaux…"
+          oninput="etudeRows[${i}].desc=this.value;autoResize(this)">${escH(row.desc)}</textarea>
+      </td>
+      <td style="vertical-align:top;padding:8px 16px;text-align:right">
+        <input class="etude-num-input" type="number" min="0" step="500" value="${row.mini||''}"
+          placeholder="0" oninput="etudeRows[${i}].mini=parseFloat(this.value)||0;etudeUpdateTotals()" />
+      </td>
+      <td style="vertical-align:top;padding:8px 16px;text-align:right">
+        <input class="etude-num-input" type="number" min="0" step="500" value="${row.maxi||''}"
+          placeholder="0" oninput="etudeRows[${i}].maxi=parseFloat(this.value)||0;etudeUpdateTotals()" />
+      </td>
+      <td style="vertical-align:top;padding:8px 4px;text-align:center">
+        <button class="etude-del-btn" onclick="etudeDelRow(${i})" title="Supprimer">✕</button>
+      </td>`;
+    tbody.appendChild(tr);
+    tr.querySelectorAll('textarea').forEach(ta => autoResize(ta));
+  });
+
+  // Séparateur final (après la dernière ligne)
+  const sepEnd = document.createElement('tr');
+  sepEnd.className = 'etude-insert-row';
+  sepEnd.innerHTML = `<td colspan="5" style="padding:0;height:6px;position:relative;border:none">
+    <div class="etude-insert-bar" onclick="etudeInsertRow(${etudeRows.length})" title="Insérer un lot ici">
+      <span class="etude-insert-line"></span>
+      <span class="etude-insert-plus">+</span>
+      <span class="etude-insert-line"></span>
+    </div>
+  </td>`;
+  tbody.appendChild(sepEnd);
+
+  etudeUpdateTotals();
+}
+
+function autoResize(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = (ta.scrollHeight) + 'px';
+}
+
+function etudeUpdateTotals() {
+  const mini = etudeRows.reduce((s,r) => s+(r.mini||0), 0);
+  const maxi = etudeRows.reduce((s,r) => s+(r.maxi||0), 0);
+  document.getElementById('etude-total-mini').textContent = fmtEuro(mini);
+  document.getElementById('etude-total-maxi').textContent = fmtEuro(maxi);
+}
+
+function fmtEuro(v) {
+  if(!v) return '0 €';
+  return v.toLocaleString('fr-FR') + ' €';
+}
+
+function escH(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function etudeAddRow() {
+  etudeRows.push({ lot:'', desc:'', mini:0, maxi:0 });
+  etudeRender();
+  // Focus sur le dernier lot input
+  const inputs = document.getElementById('etude-tbody').querySelectorAll('.etude-lot-input');
+  if(inputs.length) inputs[inputs.length-1].focus();
+}
+
+function etudeDelRow(i) {
+  etudeRows.splice(i, 1);
+  etudeRender();
+}
+
+function etudeInsertRow(i) {
+  etudeRows.splice(i, 0, { lot:'', desc:'', mini:0, maxi:0 });
+  etudeRender();
+  // Focus sur le lot input de la ligne insérée
+  setTimeout(() => {
+    const inputs = document.getElementById('etude-tbody').querySelectorAll('.etude-lot-input');
+    if(inputs[i]) inputs[i].focus();
+  }, 50);
+}
+
+function etudeReset() {
+  if(!confirm('Réinitialiser l\'étude ? Toutes les données saisies seront perdues.')) return;
+  document.getElementById('etude-nom').value = '';
+  document.getElementById('etude-adresse').value = '';
+  document.getElementById('etude-typebien').value = '';
+  document.getElementById('etude-typetravaux').value = '';
+  document.getElementById('etude-date').valueAsDate = new Date();
+  etudeRows = ETUDE_LOTS_DEFAULT.map(r => ({ ...r }));
+  etudeRender();
+}
+
+// ============================================================
+// EXPORT PDF — mise en page calquée sur le PPT ARCADIE
+// ============================================================
+function etudeExportPDF() {
+  // Charger jsPDF dynamiquement
+  if(!window.jspdf) {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = () => { window.jspdf = window.jspdf || jspdf; etudeDoExport(); };
+    document.head.appendChild(s);
+  } else {
+    etudeDoExport();
+  }
+}
+
+function etudeDoExport() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W = 210, H = 297;
+  const margin = 14;
+  const colW = W - margin*2; // 182mm
+
+  // ─── Couleurs ARCADIE ─────────────────────────────────────
+  const NAVY   = [44, 62, 94];   // header bleu foncé
+  const ACCENT = [200, 169, 110]; // or ARCADIE
+  const LGRAY  = [240, 242, 245]; // fond lignes paires
+  const DGRAY  = [80, 90, 110];   // texte secondaire
+  const WHITE  = [255, 255, 255];
+  const GREEN  = [39, 174, 96];
+
+  // ─── PAGE 1 : PAGE DE GARDE ──────────────────────────────
+  // Fond header
+  doc.setFillColor(...NAVY);
+  doc.rect(0, 0, W, 38, 'F');
+
+  // Bannière RENOVATION | CONSTRUCTION | AMENAGEMENT
+  doc.setTextColor(...ACCENT);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9);
+  doc.text('RENOVATION  |  CONSTRUCTION  |  AMÉNAGEMENT', W/2, 12, {align:'center'});
+
+  // Zone image placeholder (gris clair)
+  doc.setFillColor(220, 228, 238);
+  doc.rect(0, 38, W, 80, 'F');
+  // texte "photo du projet"
+  doc.setTextColor(160,170,185);
+  doc.setFont('helvetica','italic');
+  doc.setFontSize(10);
+  doc.text('[Photo du projet]', W/2, 80, {align:'center'});
+
+  // Nom du projet
+  const nomProjet = document.getElementById('etude-nom').value || 'VOTRE PROJET';
+  doc.setFillColor(235, 239, 244);
+  doc.rect(0, 118, W, 14, 'F');
+  doc.setTextColor(...NAVY);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(18);
+  doc.text(nomProjet.toUpperCase(), W/2, 128, {align:'center'});
+
+  // Tableau infos projet
+  const infos = [
+    ['Adresse de votre bien :', document.getElementById('etude-adresse').value || '—'],
+    ['Type de bien :', document.getElementById('etude-typebien').value || '—'],
+    ['Type de travaux :', document.getElementById('etude-typetravaux').value || '—'],
+    ['Date', document.getElementById('etude-date').value ? new Date(document.getElementById('etude-date').value).toLocaleDateString('fr-FR') : '—'],
+  ];
+
+  let y = 138;
+  infos.forEach((row, i) => {
+    const bg = i % 2 === 0 ? LGRAY : WHITE;
+    doc.setFillColor(...bg);
+    doc.rect(margin, y, colW, 14, 'F');
+    // Bordures
+    doc.setDrawColor(200, 205, 215);
+    doc.setLineWidth(0.3);
+    doc.rect(margin, y, colW, 14);
+
+    doc.setFillColor(...NAVY);
+    doc.rect(margin, y, 58, 14, 'F');
+    doc.setTextColor(...WHITE);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.text(row[0], margin+4, y+9);
+
+    doc.setTextColor(...NAVY);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.text(row[1], margin+62, y+9);
+    y += 14;
+  });
+
+  // Footer page de garde
+  const footY = H - 28;
+  doc.setFillColor(235, 239, 244);
+  doc.rect(0, footY, W, 28, 'F');
+  doc.setDrawColor(...ACCENT);
+  doc.setLineWidth(0.8);
+  doc.line(margin, footY+1, W-margin, footY+1);
+
+  doc.setTextColor(...NAVY);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(14);
+  doc.text('ETUDE DE FAISABILITE TRAVAUX', W/2, footY+17, {align:'center'});
+
+  // Logo ARCADIE text
+  doc.setFontSize(8);
+  doc.setTextColor(...ACCENT);
+  doc.setFont('helvetica','bold');
+  doc.text('ARCADIE', margin+2, footY+10);
+  doc.setTextColor(...DGRAY);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(6);
+  doc.text('MAÎTRISE D\'ŒUVRE', margin+2, footY+15);
+
+  // ─── PAGE 2 : TABLEAU DES LOTS ───────────────────────────
+  doc.addPage();
+
+  // En-tête tableau
+  const thY = 14;
+  const COL = {
+    lot:  { x:margin,       w:52 },
+    desc: { x:margin+52,    w:82 },
+    mini: { x:margin+134,   w:28 },
+    maxi: { x:margin+162,   w:20 },
+  };
+
+  // Super-header BUDGET TTC*
+  doc.setFillColor(...NAVY);
+  doc.rect(COL.mini.x, thY, COL.mini.w+COL.maxi.w, 7, 'F');
+  doc.setTextColor(...WHITE);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(7);
+  doc.text('BUDGET TTC*', COL.mini.x+(COL.mini.w+COL.maxi.w)/2, thY+5, {align:'center'});
+
+  // Sub-headers
+  const subY = thY+7;
+  [
+    { col:COL.lot,  label:'LOT' },
+    { col:COL.desc, label:'DESCRIPTION' },
+    { col:COL.mini, label:'MINI' },
+    { col:COL.maxi, label:'MAXI' },
+  ].forEach(h => {
+    doc.setFillColor(...NAVY);
+    doc.rect(h.col.x, subY, h.col.w, 8, 'F');
+    doc.setTextColor(...WHITE);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7);
+    const cx = h.col === COL.lot || h.col === COL.desc ? h.col.x+h.col.w/2 : h.col.x+h.col.w/2;
+    doc.text(h.label, cx, subY+5.5, {align:'center'});
+  });
+
+  // Lignes des lots
+  let rowY = subY+8;
+  const LINE_H = 9;
+  const MAX_PAGE_Y = H - 40; // espace pour footer
+
+  etudeRows.forEach((row, i) => {
+    if(!row.lot && !row.desc && !row.mini && !row.maxi) return; // skip vides
+
+    // Calcul hauteur de ligne (description peut wrapper)
+    const descLines = doc.splitTextToSize(row.desc || '', COL.desc.w - 4);
+    const rh = Math.max(LINE_H, descLines.length * 4.5 + 5);
+
+    // Nouvelle page si besoin
+    if(rowY + rh > MAX_PAGE_Y) {
+      doc.addPage();
+      rowY = 14;
+    }
+
+    const bg = i % 2 === 0 ? LGRAY : WHITE;
+    // Fond lot (couleur NAVY atténuée)
+    doc.setFillColor(...NAVY.map(c => Math.min(255, c + 140)));
+    doc.rect(COL.lot.x, rowY, COL.lot.w, rh, 'F');
+    // Fond desc
+    doc.setFillColor(...bg);
+    doc.rect(COL.desc.x, rowY, COL.desc.w, rh, 'F');
+    // Fond mini/maxi
+    doc.setFillColor(...bg);
+    doc.rect(COL.mini.x, rowY, COL.mini.w, rh, 'F');
+    doc.rect(COL.maxi.x, rowY, COL.maxi.w, rh, 'F');
+
+    // Bordures légères
+    doc.setDrawColor(210,215,225);
+    doc.setLineWidth(0.2);
+    doc.rect(margin, rowY, colW, rh);
+
+    // Texte LOT
+    doc.setTextColor(...NAVY);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7.5);
+    const lotLines = doc.splitTextToSize(row.lot || '', COL.lot.w-4);
+    doc.text(lotLines, COL.lot.x+COL.lot.w/2, rowY + rh/2 - (lotLines.length-1)*2, {align:'center', baseline:'middle'});
+
+    // Texte DESC
+    doc.setTextColor(50,55,70);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.text(descLines, COL.desc.x+2, rowY+5);
+
+    // Montants
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...NAVY);
+    if(row.mini) doc.text(fmtEuro(row.mini), COL.mini.x+COL.mini.w-2, rowY+rh/2, {align:'right', baseline:'middle'});
+    if(row.maxi) doc.text(fmtEuro(row.maxi), COL.maxi.x+COL.maxi.w-2, rowY+rh/2, {align:'right', baseline:'middle'});
+
+    rowY += rh;
+  });
+
+  // Ligne TOTAL
+  const totalMini = etudeRows.reduce((s,r) => s+(r.mini||0),0);
+  const totalMaxi = etudeRows.reduce((s,r) => s+(r.maxi||0),0);
+
+  if(rowY + 10 > MAX_PAGE_Y) { doc.addPage(); rowY = 14; }
+  doc.setFillColor(...NAVY);
+  doc.rect(margin, rowY, colW, 10, 'F');
+  doc.setTextColor(...ACCENT);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10);
+  doc.text('TOTAL', margin+4, rowY+7);
+  doc.setTextColor(...WHITE);
+  doc.setFontSize(9);
+  doc.text(fmtEuro(totalMini), COL.mini.x+COL.mini.w-2, rowY+7, {align:'right'});
+  doc.text(fmtEuro(totalMaxi), COL.maxi.x+COL.maxi.w-2, rowY+7, {align:'right'});
+  rowY += 12;
+
+  // Mention légale
+  if(rowY + 20 > MAX_PAGE_Y) { doc.addPage(); rowY = 14; }
+  doc.setFontSize(6);
+  doc.setTextColor(...DGRAY);
+  doc.setFont('helvetica','italic');
+  const mention = '* Ce budget est une estimation des travaux à effectuer et ne constitue pas un devis, lequel sera de la seule responsabilité du ou des entreprises du bâtiment en charge des travaux que le futur maître d\'ouvrage choisira. La liste ci-dessus est non exhaustive des besoins spécifiques du futur client.';
+  const mentionLines = doc.splitTextToSize(mention, colW);
+  doc.text(mentionLines, margin, rowY+5);
+  rowY += mentionLines.length * 3.5 + 8;
+
+  // Coordonnées ARCADIE
+  doc.setFontSize(8);
+  doc.setTextColor(...NAVY);
+  doc.setFont('helvetica','bold');
+  doc.text('SAS ARCADIE', margin, rowY);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...DGRAY);
+  doc.text('Sylvain GRUELLES – Gérant', margin, rowY+5);
+  doc.text('100 route d\'Agen 47450 COLAYRAC SAINT CIRQ', margin, rowY+10);
+  doc.text('Téléphone : 05 53 66 99 36', margin, rowY+15);
+
+  // Numéro de pages
+  const totalPages = doc.getNumberOfPages();
+  for(let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFontSize(7);
+    doc.setTextColor(...DGRAY);
+    doc.text(`${p} / ${totalPages}`, W-margin, H-6, {align:'right'});
+  }
+
+  // Téléchargement
+  const nom = (document.getElementById('etude-nom').value || 'etude').replace(/\s+/g,'_');
+  doc.save(`ARCADIE_Etude_${nom}.pdf`);
+  showToast('PDF généré avec succès ✓');
+}
 
 
 </script>

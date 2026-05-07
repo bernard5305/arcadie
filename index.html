@@ -651,8 +651,10 @@
       <div class="page-title">Étude de faisabilité</div>
       <div class="page-subtitle">Estimation budgétaire travaux — saisie libre, export PDF</div>
     </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <button class="btn btn-ghost btn-sm" onclick="etudeReset()" title="Nouvelle étude vierge">🗑 Réinitialiser</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="etudeReset()" title="Nouvelle étude vierge">🗑 Nouvelle</button>
+      <button class="btn btn-ghost btn-sm" onclick="etudeOpenList()">📂 Mes études</button>
+      <button class="btn btn-ghost btn-sm" onclick="etudeSave()">💾 Sauvegarder</button>
       <button class="btn btn-primary" onclick="etudeExportPDF()">⬇ Export PDF</button>
     </div>
   </div>
@@ -877,6 +879,35 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-new-contact')">Annuler</button>
       <button class="btn btn-primary" onclick="addNewContact()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODALE MES ÉTUDES -->
+<div class="modal-overlay" id="modal-etudes" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:700px;width:95vw">
+    <div class="modal-header">
+      <div class="modal-title">📂 Mes études sauvegardées</div>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('modal-etudes').classList.remove('open')">✕</button>
+    </div>
+    <div style="padding:16px 20px">
+      <div id="etudes-list-loading" style="text-align:center;padding:24px;color:var(--muted)">Chargement…</div>
+      <div id="etudes-list-empty"   style="display:none;text-align:center;padding:24px;color:var(--muted)">Aucune étude sauvegardée pour le moment.</div>
+      <table id="etudes-list-table" style="display:none;table-layout:fixed;width:100%">
+        <colgroup>
+          <col style="width:22%"><col style="width:25%"><col style="width:10%">
+          <col style="width:12%"><col style="width:12%"><col style="width:19%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Projet</th><th>Adresse</th><th>Type de bien</th>
+            <th style="text-align:right">Mini</th><th style="text-align:right">Maxi</th>
+            <th style="text-align:center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="etudes-list-tbody"></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -2493,6 +2524,164 @@ function etudeDoExport() {
   showToast('PDF généré avec succès ✓');
 }
 
+
+
+// ============================================================
+// SAUVEGARDE / CHARGEMENT ÉTUDES — Google Sheets
+// ============================================================
+
+const ETUDES_URL = API_URL; // même Apps Script déployé
+
+let etudeCurrentOnglet = null; // nom de l'onglet en cours d'édition
+
+// ── Sauvegarde ──────────────────────────────────────────────
+async function etudeSave() {
+  const nom = document.getElementById('etude-nom').value.trim();
+  if (!nom) { showToast('⚠ Renseigne le nom du projet avant de sauvegarder'); return; }
+
+  // Construire le nom d'onglet (réutiliser si déjà sauvegardé)
+  const onglet = etudeCurrentOnglet ||
+    nom.replace(/[^a-zA-Z0-9_\-\u00C0-\u017E ]/g, '').trim().substring(0, 50);
+
+  const etude = {
+    nom,
+    adresse:      document.getElementById('etude-adresse').value,
+    type_bien:    document.getElementById('etude-typebien').value,
+    type_travaux: document.getElementById('etude-typetravaux').value,
+    date:         document.getElementById('etude-date').value,
+    lots:         etudeRows.map(r => ({ lot:r.lot, desc:r.desc, mini:r.mini||0, maxi:r.maxi||0 })),
+    onglet,
+  };
+
+  showToast('💾 Sauvegarde en cours…');
+  try {
+    const res = await fetch(ETUDES_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'save_etude', etude }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      etudeCurrentOnglet = data.onglet;
+      showToast('✅ Étude sauvegardée');
+    } else {
+      showToast('❌ Erreur : ' + (data.error || 'inconnue'));
+    }
+  } catch(e) {
+    showToast('❌ Erreur réseau');
+  }
+}
+
+// ── Liste des études ─────────────────────────────────────────
+async function etudeOpenList() {
+  document.getElementById('modal-etudes').classList.add('open');
+  document.getElementById('etudes-list-loading').style.display = 'block';
+  document.getElementById('etudes-list-empty').style.display   = 'none';
+  document.getElementById('etudes-list-table').style.display   = 'none';
+
+  try {
+    const res  = await fetch(ETUDES_URL + '?action=list_etudes');
+    const data = await res.json();
+    const list = data.etudes || [];
+
+    document.getElementById('etudes-list-loading').style.display = 'none';
+
+    if (list.length === 0) {
+      document.getElementById('etudes-list-empty').style.display = 'block';
+      return;
+    }
+
+    const tbody = document.getElementById('etudes-list-tbody');
+    tbody.innerHTML = '';
+    list.forEach(e => {
+      const tr = document.createElement('tr');
+      const mini = parseFloat(e.total_mini)||0;
+      const maxi = parseFloat(e.total_maxi)||0;
+      tr.innerHTML = `
+        <td style="font-weight:600;color:var(--accent)">${e.nom||'—'}</td>
+        <td style="font-size:12px;color:var(--muted)">${e.adresse||'—'}</td>
+        <td style="font-size:12px">${e.type_bien||'—'}</td>
+        <td style="text-align:right;font-size:12px">${mini ? mini.toLocaleString('fr-FR')+'&thinsp;€' : '—'}</td>
+        <td style="text-align:right;font-size:12px">${maxi ? maxi.toLocaleString('fr-FR')+'&thinsp;€' : '—'}</td>
+        <td style="text-align:center">
+          <div style="display:flex;gap:6px;justify-content:center">
+            <button class="btn btn-ghost btn-sm" style="font-size:11px"
+              onclick="etudeLoad('${e.onglet}')">✏ Ouvrir</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px;color:var(--red)"
+              onclick="etudeDelete('${e.onglet}','${(e.nom||'').replace(/'/g,'')}')">🗑</button>
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('etudes-list-table').style.display = 'table';
+
+  } catch(err) {
+    document.getElementById('etudes-list-loading').textContent = '❌ Erreur de chargement';
+  }
+}
+
+// ── Charger une étude ────────────────────────────────────────
+async function etudeLoad(onglet) {
+  showToast('Chargement…');
+  try {
+    const res  = await fetch(ETUDES_URL + '?action=load_etude&onglet=' + encodeURIComponent(onglet));
+    const data = await res.json();
+    const e    = data.etude;
+    if (!e) { showToast('❌ Étude introuvable'); return; }
+
+    document.getElementById('etude-nom').value        = e.nom || '';
+    document.getElementById('etude-adresse').value    = e.adresse || '';
+    document.getElementById('etude-typebien').value   = e.type_bien || '';
+    document.getElementById('etude-typetravaux').value= e.type_travaux || '';
+    document.getElementById('etude-date').value       = e.date || '';
+
+    etudeRows = (e.lots || []).map(l => ({
+      lot:  l.lot  || '',
+      desc: l.desc || '',
+      mini: parseFloat(l.mini) || 0,
+      maxi: parseFloat(l.maxi) || 0,
+    }));
+    etudeCurrentOnglet = onglet;
+    etudeRender();
+
+    document.getElementById('modal-etudes').classList.remove('open');
+    showPage('etude');
+    showToast('✅ Étude chargée : ' + (e.nom || onglet));
+  } catch(err) {
+    showToast('❌ Erreur de chargement');
+  }
+}
+
+// ── Supprimer une étude ──────────────────────────────────────
+async function etudeDelete(onglet, nom) {
+  if (!confirm('Supprimer définitivement l\'étude « ' + nom + ' » ?\nCette action est irréversible.')) return;
+  try {
+    const res  = await fetch(ETUDES_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete_etude', onglet }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('🗑 Étude supprimée');
+      etudeOpenList(); // rafraîchir la liste
+    }
+  } catch(e) {
+    showToast('❌ Erreur lors de la suppression');
+  }
+}
+
+// Surcharger etudeReset pour réinitialiser aussi l'onglet courant
+const _etudeResetOrig = etudeReset;
+etudeReset = function() {
+  if(!confirm('Créer une nouvelle étude vierge ? Les données non sauvegardées seront perdues.')) return;
+  etudeCurrentOnglet = null;
+  document.getElementById('etude-nom').value         = '';
+  document.getElementById('etude-adresse').value     = '';
+  document.getElementById('etude-typebien').value    = '';
+  document.getElementById('etude-typetravaux').value = '';
+  document.getElementById('etude-date').valueAsDate  = new Date();
+  etudeRows = ETUDE_LOTS_DEFAULT.map(r => ({ ...r }));
+  etudeRender();
+};
 
 </script>
 <!-- Images ARCADIE pour export PDF (cachées) -->

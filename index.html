@@ -186,6 +186,10 @@
   }
   .adm-item-label { font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:500; }
   .adm-item-status { font-size:12px; font-weight:600; }
+  .adm-select-ok   { background:rgba(39,174,96,.18)!important;  color:#1a7a42!important;  border:1.5px solid rgba(39,174,96,.5)!important;  font-weight:700!important; border-radius:6px; }
+  .adm-select-warn { background:rgba(245,158,11,.18)!important; color:#b45309!important;  border:1.5px solid rgba(245,158,11,.5)!important; font-weight:700!important; border-radius:6px; }
+  .adm-select-info { background:rgba(99,179,237,.18)!important; color:#1a5276!important;  border:1.5px solid rgba(99,179,237,.5)!important; font-weight:700!important; border-radius:6px; }
+  .adm-select-muted{ background:var(--surface2)!important;      color:var(--muted)!important; border:1.5px solid var(--border)!important; border-radius:6px; }
 
   /* PROGRESS BAR */
   .progress-wrap { background:var(--surface2); border-radius:4px; height:6px; overflow:hidden; }
@@ -1177,6 +1181,21 @@ function statusBadge(v) {
   return `<span class="badge badge-muted">${v}</span>`;
 }
 
+// Couleur des selects dans le détail administratif
+function admSelectClass(v) {
+  if (!v) return 'adm-select-muted';
+  v = v.toLowerCase().trim();
+  if (['signé','ok','payé','validé'].includes(v))       return 'adm-select-ok';
+  if (['a faire'].includes(v))                           return 'adm-select-warn';
+  if (['en cours','envoyé','déposé'].includes(v))        return 'adm-select-info';
+  if (['non compris'].includes(v))                       return 'adm-select-muted';
+  return 'adm-select-muted';
+}
+function admSelectColor(sel) {
+  sel.className = sel.className.replace(/adm-select-\S+/g, '').trim();
+  sel.classList.add(admSelectClass(sel.value));
+}
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -1744,7 +1763,8 @@ function openAdmDetail(dossier) {
     const opts = STATUS_OPTIONS.map(function(v) {
       return '<option' + (val === v ? ' selected' : '') + ' value="' + v + '">' + (v || '—') + '</option>';
     }).join('');
-    return '<div class="adm-item"><div class="adm-item-label">' + k + '</div><select id="' + id + '" style="width:100%;padding:4px 8px;font-size:12px">' + opts + '</select></div>';
+    const selClass = admSelectClass(val);
+    return '<div class="adm-item"><div class="adm-item-label">' + k + '</div><select id="' + id + '" class="' + selClass + '" style="width:100%;padding:6px 8px;font-size:12px" onchange="admSelectColor(this)">' + opts + '</select></div>';
   }
 
   const allKeys = Object.keys(a).filter(function(k) { return k !== 'dossier' && !CHAMPS_EXCLUS.includes(k); });

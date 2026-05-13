@@ -1787,7 +1787,7 @@ function openAdmDetail(dossier) {
 function saveAdm(dossier) {
   const a = allAdm.find(x => x.dossier === dossier);
   if (!a) return;
-  const CHAMPS_EXCLUS = ['dossier', 'Adresse Chantier', 'Adresse Client', 'Aides'];
+  const CHAMPS_EXCLUS = ['Adresse Chantier', 'Adresse Client', 'Aides']; // 'dossier' doit être inclus pour que le backend trouve la bonne ligne
   Object.keys(a).filter(function(k) { return !CHAMPS_EXCLUS.includes(k); }).forEach(function(k) {
     const el = document.getElementById('adm_' + k.replace(/[^a-zA-Z0-9]/g, '_'));
     if (el) a[k] = el.value || null;
